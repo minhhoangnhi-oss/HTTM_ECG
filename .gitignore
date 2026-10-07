@@ -10,3 +10,4 @@ logs/
 *.dat
 *.hea
 *.atr
+outputs/
