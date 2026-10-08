@@ -1,0 +1,49 @@
+{
+  "model_version": "20261008_094922",
+  "model_variant": "cnn_rr",
+  "seed": 42,
+  "deployment_model": "exports/cnn_rr_fp32.onnx",
+  "experimental_int8_model": "exports/cnn_rr_int8.onnx",
+  "input_names": [
+    "ecg",
+    "rr"
+  ],
+  "ecg_shape": [
+    "batch",
+    1,
+    234
+  ],
+  "rr_shape": [
+    "batch",
+    3
+  ],
+  "input_dtype": "float32",
+  "output_name": "probabilities",
+  "output_shape": [
+    "batch",
+    5
+  ],
+  "class_names": [
+    "N",
+    "S",
+    "V",
+    "F",
+    "Q"
+  ],
+  "rr_order": [
+    "RR_pre",
+    "RR_post",
+    "RR_local_avg"
+  ],
+  "rr_unit_before_normalization": "seconds",
+  "normalization_file": "normalization.json",
+  "normalization_location": "outside_ONNX",
+  "normalization_application": "exactly_once",
+  "decision_rule": "argmax",
+  "sampling_rate": 360,
+  "preprocessing_file": "preprocess_config.json",
+  "r_peak_source": "provided_annotations",
+  "intended_use": "review_of_previously_acquired_Holter_recordings",
+  "pytorch_checkpoint_output": "logits",
+  "onnx_output": "probabilities"
+}

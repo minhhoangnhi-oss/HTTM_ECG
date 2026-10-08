@@ -16,17 +16,18 @@ MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/free")
 SYSTEM_PROMPT = """
 Bạn là trợ lý điều phối dịch vụ ECG.
 Trước tiên dùng list_records để xem bản ghi được phép.
-Sau đó dùng classify_record cho demo_001.
+Sau đó dùng classify_record cho bản ghi 100 có trong danh sách.
 Chỉ tổng hợp thông tin do công cụ trả về.
 Không tự tạo nhãn, xác suất hoặc số liệu.
-Nếu mode là mock, nói rõ đây là thử nghiệm kết nối,
-chưa có mô hình phân loại thật.
-Không diễn giải tín hiệu giả thành kết luận sức khỏe.
+Nêu rõ nguồn dữ liệu, record_id, mode và phiên bản mô hình.
+Nêu số nhịp đã xử lý, bỏ qua và số nhịp dự đoán theo từng lớp.
+Đây là kết quả dự đoán của mô hình trên ECG đã thu nhận.
+Không coi số lượng nhãn dự đoán là độ chính xác của mô hình.
+Không kết luận bệnh, chẩn đoán hoặc đề xuất điều trị.
 Bạn không có công cụ ghi tệp hay gửi báo cáo.
 Việc lưu do chương trình hỏi người dùng sau khi hiển thị kết quả.
 Trả lời ngắn gọn bằng tiếng Việt.
 """
-
 
 def now():
     return datetime.now(timezone.utc).isoformat()
@@ -87,7 +88,7 @@ def run_agent():
         {"role": "system", "content": SYSTEM_PROMPT},
         {
             "role": "user",
-            "content": "Xem bản ghi được phép và xử lý demo_001."
+            "content": "Xem bản ghi được phép và xử lý bản ghi 100."
         }
     ]
 
