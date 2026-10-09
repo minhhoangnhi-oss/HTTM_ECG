@@ -222,3 +222,62 @@ Các quy ước đầu vào, mục tiêu và phương pháp đo nằm trong TECH
 - Độ trễ API không bao gồm thời gian gọi LLM.
 
 - Kết quả dự đoán không phải chẩn đoán hoặc đề xuất điều trị.
+
+## Bổ sung kiến trúc giao diện web
+
+Giao diện web và API ECG chạy trong cùng ứng dụng FastAPI, cùng container Docker. Agent dòng lệnh vẫn được giữ lại.
+
+```mermaid
+flowchart TD
+    U["Người dùng trên trình duyệt"] --> W["web/index.html"]
+    W --> A["web_agent.py"]
+    A <--> L["OpenRouter"]
+    A --> T["agent_tools.py"]
+    T --> P["API /predict"]
+    P --> M["Tiền xử lý và mô hình ONNX"]
+    M --> P
+    P --> T
+    T --> A
+    A --> W
+    W --> C{"Người dùng chọn"}
+    C -->|Lưu| R["POST /agent/report"]
+    C -->|Bỏ qua| D["Hủy bản xem trước"]
+    R --> O["outputs/report_RUN_ID.json"]
+    A --> G["logs/agent_audit.jsonl"]
+    R --> G
+```
+
+### Các endpoint bổ sung
+
+| Endpoint | Vai trò |
+|---|---|
+| `GET /` | Trả giao diện `web/index.html` |
+| `GET /agent/config` | Trả trạng thái cấu hình key, tên mô hình yêu cầu và tình trạng dữ liệu được phép |
+| `POST /agent/chat` | Nhận yêu cầu cùng lịch sử giới hạn, điều phối LLM và công cụ |
+| `POST /agent/report` | Tiếp nhận quyết định lưu hoặc bỏ bản xem trước |
+
+### Luồng xử lý và lưu báo cáo
+
+1. Trình duyệt gửi yêu cầu tới backend; API key OpenRouter chỉ được sử dụng ở backend.
+2. Backend cung cấp hai công cụ `list_records` và `classify_record` cho LLM.
+3. Công cụ kiểm tra tham số và quyền truy cập; chỉ chấp nhận bản ghi 100.
+4. Khi phân loại, công cụ đọc ECG cùng chú thích trên máy và gọi `/predict`.
+5. LLM nhận metadata và số liệu tổng hợp từ công cụ, không nhận toàn bộ tín hiệu ECG qua công cụ.
+6. Backend trả bản tóm tắt và số liệu API để người dùng xem.
+7. Nếu có kết quả phân loại, backend tạo bản xem trước trong bộ nhớ, kèm run ID và token riêng.
+8. Chọn lưu gửi quyết định xác nhận tới `/agent/report`; backend tạo file JSON trong `outputs`.
+9. Chọn bỏ qua hủy bản xem trước và không tạo file báo cáo.
+
+Backend kiểm tra Origin khi trình duyệt gửi header này, token của bản xem trước và xác nhận lưu. Các cơ chế này không thay thế một hệ thống đăng nhập và phân quyền nhiều người dùng.
+
+### Giới hạn vận hành
+
+- Tối đa hai lượt Agent đang xử lý đồng thời.
+- Mỗi lượt tối đa sáu vòng gọi LLM và tám yêu cầu gọi công cụ.
+- Lịch sử đầu vào tối đa sáu tin nhắn, với giới hạn độ dài do backend kiểm tra.
+- Tối đa 64 bản xem trước trong bộ nhớ; hết hạn sau một giờ. Khi đạt giới hạn, bản cũ nhất được loại bỏ.
+- Khởi động lại container làm mất các bản xem trước chưa lưu.
+- Báo cáo và nhật ký đã ghi được giữ trên máy qua bind mount.
+- LLM không có công cụ chạy shell, đọc tệp tùy ý hay trực tiếp lưu báo cáo.
+- Lời tóm tắt có thể sai; số liệu API được hiển thị riêng để đối chiếu.
+- Thay đổi system prompt hoặc HTML cần build image và tạo lại container để có hiệu lực.

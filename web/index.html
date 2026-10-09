@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTTM ECG · AI Agent</title>
+<style>
+:root{color-scheme:light;--bg:#f3f6fa;--ink:#17263a;--muted:#64748b;--line:#e1e8f0;--blue:#2563eb;--green:#059669}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.6 "Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
+button,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:wait;opacity:.55}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);min-height:100vh}
+.sidebar{padding:28px 22px;background:#122238;color:#e9f1fa}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.brand-icon{display:grid;place-items:center;width:44px;height:44px;background:#263e5f;border-radius:14px;color:#75e0c0;font-size:25px}
+.brand strong{display:block;font-size:19px}
+.brand small{color:#a6b7ce}
+.panel{padding:18px;margin:18px 0;border:1px solid #33445c;border-radius:16px;background:#1a2c44}
+.panel h2{font-size:14px;margin:0 0 12px;color:#bbcee6;font-weight:600}
+.status{display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:#94a3b8;flex-shrink:0}
+.dot.ok{background:#34d399}
+.dot.bad{background:#fbbf24}
+.meta{font-size:13px;color:#b4c5db;margin-top:10px;overflow-wrap:anywhere}
+.record{font-size:26px;font-weight:700;letter-spacing:.5px}
+.sidebar .note{font-size:12px;color:#a6b7ce}
+.result-empty{font-size:13px;color:#a6b7ce}
+.result-meta{font-size:13px;color:#b4c5db;margin-bottom:14px}
+.count-row{display:flex;justify-content:space-between;font-size:13px;margin-top:9px}
+.bar{height:5px;background:#32465f;border-radius:5px;margin-top:4px;overflow:hidden}
+.bar span{display:block;height:100%;background:#55c5ad;border-radius:5px}
+.main{height:100vh;display:flex;flex-direction:column;min-width:0}
+.header{padding:22px 32px;border-bottom:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.header h1{margin:0;font-size:22px}
+.header p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.outline{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--muted);white-space:nowrap}
+.chat{flex:1;overflow-y:auto;padding:28px 32px}
+.message{max-width:860px;margin:0 auto 22px}
+.message.user{display:flex;justify-content:flex-end}
+.user-bubble{background:var(--blue);color:#fff;padding:13px 18px;border-radius:18px 18px 4px 18px;max-width:80%;white-space:pre-wrap;overflow-wrap:anywhere}
+.assistant-card{background:#fff;border:1px solid var(--line);padding:20px 22px;border-radius:18px;box-shadow:0 4px 18px #1c355008}
+.assistant-label{color:var(--green);font-weight:700;font-size:12px;letter-spacing:.5px;margin-bottom:12px}
+.summary{overflow-wrap:anywhere}
+.summary p{margin:7px 0}
+.summary h3{font-size:16px;margin:14px 0 7px}
+.summary .bullet{margin:5px 0;padding-left:12px}
+.summary .space{height:7px}
+.small{font-size:12px;color:var(--muted);margin-top:13px}
+.details{font-size:12px;color:var(--muted);margin-top:12px}
+.details summary{cursor:pointer}
+.details div{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:8px}
+.preview{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.preview p{font-size:13px;color:var(--muted);margin:0 0 10px}
+.actions{display:flex;flex-wrap:wrap;gap:9px}
+.btn{border:0;border-radius:10px;padding:9px 14px;background:var(--blue);color:#fff;font-weight:600}
+.btn.secondary{background:#eef2f7;color:#4b5f78}
+.btn.download{background:#e6f6ef;color:#047857}
+.error{color:#b42318;background:#fff4f2;border:1px solid #ffd9d2;border-radius:12px;padding:12px 15px;white-space:pre-wrap}
+.typing{display:flex;align-items:center;gap:10px;color:var(--muted)}
+.spinner{width:17px;height:17px;border:2px solid #dbe5f1;border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.composer{background:#fff;border-top:1px solid var(--line);padding:18px 32px}
+.suggestions{display:flex;flex-wrap:wrap;gap:8px;max-width:860px;margin:0 auto 12px}
+.suggestion{background:#f7f9fc;color:#48617f;border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:12px}
+.input-row{display:flex;align-items:flex-end;gap:10px;max-width:860px;margin:auto}
+textarea{width:100%;min-height:55px;max-height:160px;resize:vertical;border:1px solid #cfd9e6;border-radius:13px;padding:14px;color:var(--ink);outline:none;background:#fbfcfe}
+textarea:focus{border-color:#7da8f7;box-shadow:0 0 0 3px #2563eb0b}
+.send{height:55px;padding:0 22px;flex-shrink:0}
+.hint{max-width:860px;margin:8px auto 0;color:var(--muted);font-size:11px}
+a{color:inherit}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.sidebar{padding:16px 20px}.brand{margin:0 0 12px}.panel{margin:10px 0;padding:13px}.sidebar .note{display:none}.main{height:85vh}.header,.chat,.composer{padding:18px}.header h1{font-size:19px}.user-bubble{max-width:95%}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<div class="brand">
+<div class="brand-icon" aria-hidden="true">⌁</div>
+<div><strong>HTTM ECG</strong><small>AI Agent · MIT-BIH</small></div>
+</div>
+
+<section class="panel">
+<h2>DỊCH VỤ ECG</h2>
+<div class="status"><span id="statusDot" class="dot"></span><span id="apiStatus" role="status">Đang kết nối…</span></div>
+<div id="modelVersion" class="meta"></div>
+<div id="llmStatus" class="meta"></div>
+</section>
+
+<section class="panel">
+<h2>BẢN GHI ĐƯỢC PHÉP</h2>
+<div class="record">100</div>
+<div class="meta">PhysioNet MIT-BIH · MLII · 360 Hz</div>
+<div id="recordStatus" class="meta">Đang kiểm tra dữ liệu…</div>
+</section>
+
+<section class="panel">
+<h2>KẾT QUẢ GẦN NHẤT</h2>
+<div id="resultPanel" class="result-empty">Gửi yêu cầu phân tích để xem thống kê.</div>
+</section>
+
+<p class="note">Phân loại ECG đã thu nhận. Kết quả dự đoán phục vụ nghiên cứu và xem lại dữ liệu, không phải chẩn đoán.</p>
+<p class="note"><a href="/docs" target="_blank" rel="noopener">Mở tài liệu API ↗</a></p>
+</aside>
+
+<main class="main">
+<header class="header">
+<div><h1>Trò chuyện với ECG Agent</h1><p>Nhập yêu cầu · Xem số liệu · Xác nhận lưu báo cáo</p></div>
+<button id="reset" class="outline" type="button">Cuộc trò chuyện mới</button>
+</header>
+
+<div id="chat" class="chat" role="log" aria-live="polite"></div>
+
+<form id="form" class="composer">
+<div class="suggestions">
+<button class="suggestion" type="button" data-prompt="Liệt kê các bản ghi được phép truy cập.">Xem bản ghi</button>
+<button class="suggestion" type="button" data-prompt="Phân tích bản ghi 100 và tóm tắt kết quả từ API.">Phân tích bản ghi 100</button>
+<button class="suggestion" type="button" data-prompt="Cho biết số nhịp dự đoán theo các lớp N, S, V, F, Q của bản ghi 100.">Thống kê các lớp</button>
+</div>
+<div class="input-row">
+<textarea id="input" maxlength="1500" rows="2" aria-label="Yêu cầu gửi Agent" placeholder="Ví dụ: Phân tích bản ghi 100 và tóm tắt kết quả…"></textarea>
+<button id="send" class="btn send" type="submit">Gửi yêu cầu</button>
+</div>
+<div class="hint">Enter để gửi · Shift + Enter để xuống dòng · Báo cáo chỉ được lưu khi bạn chọn nút lưu.</div>
+</form>
+</main>
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const send = document.getElementById("send");
+const reset = document.getElementById("reset");
+const labels = ["N", "S", "V", "F", "Q"];
+let history = [];
+let busy = false;
+
+function element(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+}
+
+function scrollChat() {
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function setBusy(value) {
+    busy = value;
+    send.disabled = value;
+    reset.disabled = value;
+    input.disabled = value;
+    document.querySelectorAll(".suggestion").forEach(button => {
+        button.disabled = value;
+    });
+    send.textContent = value ? "Đang xử lý…" : "Gửi yêu cầu";
+}
+
+function assistantCard() {
+    const wrapper = element("div", "message");
+    const card = element("div", "assistant-card");
+    card.append(element("div", "assistant-label", "ECG AGENT"));
+    wrapper.append(card);
+    chat.append(wrapper);
+    return {wrapper, card};
+}
+
+function appendInline(node, text) {
+    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    for (const part of parts) {
+        if (part.startsWith("**") && part.endsWith("**")) {
+            node.append(element("strong", "", part.slice(2, -2)));
+        } else {
+            node.append(document.createTextNode(part));
+        }
+    }
+}
+
+function renderSummary(parent, text) {
+    const container = element("div", "summary");
+    for (const line of text.split("\n")) {
+        if (!line.trim()) {
+            container.append(element("div", "space"));
+            continue;
+        }
+        let node;
+        let content = line;
+        if (/^#{1,3}\s+/.test(line)) {
+            node = element("h3");
+            content = line.replace(/^#{1,3}\s+/, "");
+        } else if (/^[-*]\s+/.test(line)) {
+            node = element("div", "bullet");
+            content = "• " + line.replace(/^[-*]\s+/, "");
+        } else {
+            node = element("p");
+        }
+        appendInline(node, content);
+        container.append(node);
+    }
+    parent.append(container);
+}
+
+function welcome() {
+    const {card} = assistantCard();
+    renderSummary(card, "Chào bạn! Tôi hỗ trợ xem và phân tích bản ghi ECG 100.\nBạn có thể chọn một gợi ý bên dưới hoặc nhập yêu cầu. Số liệu phân loại được lấy từ API chạy mô hình ONNX.");
+}
+
+function updateResult(result) {
+    const panel = document.getElementById("resultPanel");
+    panel.replaceChildren();
+    panel.className = "";
+    panel.append(element("div", "result-meta",
+        `Bản ghi ${result.record_id} · Đã xử lý ${result.processed_count} · Bỏ qua ${result.skipped_count}`));
+    const total = Number(result.processed_count);
+    for (const label of labels) {
+        const count = Number(result.class_counts[label]);
+        const row = element("div", "count-row");
+        row.append(element("span", "", `Lớp ${label}`));
+        row.append(element("strong", "", String(count)));
+        const bar = element("div", "bar");
+        const fill = element("span");
+        fill.style.width = `${total > 0 ? count / total * 100 : 0}%`;
+        bar.append(fill);
+        panel.append(row, bar);
+    }
+    panel.append(element("div", "meta", "Thanh biểu diễn tỷ lệ nhãn dự đoán, không phải độ tin cậy."));
+}
+
+async function requestJSON(url, options = {}) {
+    const response = await fetch(url, options);
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+        let message = `Dịch vụ báo lỗi HTTP ${response.status}.`;
+        if (typeof data?.detail === "string") message = data.detail;
+        else if (Array.isArray(data?.detail)) {
+            message = data.detail.map(item => item.msg).join("\n");
+        }
+        throw new Error(message);
+    }
+    if (!data) throw new Error("Dịch vụ không trả dữ liệu JSON.");
+    return data;
+}
+
+function downloadReport(report, filename) {
+    const blob = new Blob([JSON.stringify(report, null, 2)], {
+        type: "application/json;charset=utf-8"
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function addReportActions(card, data) {
+    const preview = element("div", "preview");
+    const message = element("p", "", "Bản xem trước chưa được lưu. Bạn muốn lưu báo cáo này?");
+    const actions = element("div", "actions");
+    const save = element("button", "btn", "Lưu báo cáo");
+    const discard = element("button", "btn secondary", "Bỏ qua lưu");
+    save.type = discard.type = "button";
+    actions.append(save, discard);
+    preview.append(message, actions);
+    card.append(preview);
+
+    async function decide(action) {
+        save.disabled = discard.disabled = true;
+        message.textContent = action === "save" ? "Đang lưu…" : "Đang bỏ qua…";
+        try {
+            const result = await requestJSON("/agent/report", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    run_id: data.run_id,
+                    token: data.save_token,
+                    action,
+                    confirmed: action === "save"
+                })
+            });
+            actions.replaceChildren();
+            if (result.saved) {
+                message.textContent = `Đã lưu trong outputs/: ${result.filename}`;
+                const download = element("button", "btn download", "Tải báo cáo JSON");
+                download.type = "button";
+                download.addEventListener("click", () => {
+                    downloadReport(result.report, result.filename);
+                });
+                actions.append(download);
+            } else {
+                message.textContent = "Đã bỏ qua. Không tạo tệp báo cáo.";
+            }
+        } catch (error) {
+            message.textContent = error.message;
+            save.disabled = discard.disabled = false;
+        }
+        scrollChat();
+    }
+
+    save.addEventListener("click", () => decide("save"));
+    discard.addEventListener("click", () => decide("discard"));
+}
+
+async function submitMessage(event) {
+    event.preventDefault();
+    const message = input.value.trim();
+    if (!message || busy) return;
+
+    const past = history.slice(-6).map(item => ({
+        role: item.role,
+        content: item.content.slice(0, 2000)
+    }));
+
+    const user = element("div", "message user");
+    user.append(element("div", "user-bubble", message));
+    chat.append(user);
+    input.value = "";
+
+    const pending = assistantCard();
+    const typing = element("div", "typing");
+    typing.append(element("span", "spinner"), element("span", "", "Agent đang lấy dữ liệu và trả lời…"));
+    pending.card.append(typing);
+    setBusy(true);
+    scrollChat();
+
+    try {
+        const data = await requestJSON("/agent/chat", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({message, history: past})
+        });
+        pending.wrapper.remove();
+        const {card} = assistantCard();
+        renderSummary(card, data.summary);
+
+        card.append(element("div", "small",
+            `Hoàn thành trong ${Number(data.elapsed_seconds).toFixed(1)} giây · ${data.tools.length} lượt gọi công cụ`));
+
+        const details = element("details", "details");
+        details.append(element("summary", "", "Thông tin lần chạy"));
+        const modelNames = data.actual_models.filter(Boolean).join("\n");
+        const toolNames = data.tools.map(item =>
+            `${item.tool}: ${item.status === "success" ? "thành công" : "không thực hiện được"}`
+        ).join("\n");
+        details.append(element("div", "",
+            `Run ID: ${data.run_id}\nMô hình LLM thực tế:\n${modelNames || "Không có thông tin"}\nCông cụ:\n${toolNames}`));
+        card.append(details);
+
+        if (data.api_result) {
+            updateResult(data.api_result);
+            addReportActions(card, data);
+        } else {
+            card.append(element("div", "small",
+                "Lượt này chưa có kết quả phân loại API để lưu báo cáo."));
+        }
+
+        history.push(
+            {role: "user", content: message},
+            {role: "assistant", content: data.summary}
+        );
+        history = history.slice(-6);
+    } catch (error) {
+        pending.wrapper.remove();
+        const {card} = assistantCard();
+        card.append(element("div", "error", error.message));
+    } finally {
+        setBusy(false);
+        input.focus();
+        scrollChat();
+    }
+}
+
+async function refreshStatus() {
+    const dot = document.getElementById("statusDot");
+    try {
+        const [health, config] = await Promise.all([
+            requestJSON("/health"),
+            requestJSON("/agent/config")
+        ]);
+        const ready = health.status === "ok" && health.mode === "onnx";
+        dot.className = ready ? "dot ok" : "dot bad";
+        document.getElementById("apiStatus").textContent = ready ? "API đang hoạt động" : "API chưa sẵn sàng";
+        document.getElementById("modelVersion").textContent = `Mô hình ECG: ${health.model_version ?? "Chưa nạp"}`;
+        document.getElementById("llmStatus").textContent = config.key_configured
+            ? `LLM: ${config.requested_model}` : "Chưa có API key OpenRouter";
+        document.getElementById("recordStatus").textContent = config.record_ready
+            ? "Dữ liệu đã sẵn sàng" : "Thiếu dữ liệu 100.dat / .hea / .atr";
+    } catch {
+        dot.className = "dot bad";
+        document.getElementById("apiStatus").textContent = "Chưa kết nối được dịch vụ";
+    }
+}
+
+document.getElementById("form").addEventListener("submit", submitMessage);
+input.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+        event.preventDefault();
+        document.getElementById("form").requestSubmit();
+    }
+});
+document.querySelectorAll(".suggestion").forEach(button => {
+    button.addEventListener("click", () => {
+        input.value = button.dataset.prompt;
+        input.focus();
+    });
+});
+reset.addEventListener("click", () => {
+    history = [];
+    chat.replaceChildren();
+    welcome();
+    input.focus();
+});
+
+welcome();
+refreshStatus();
+setInterval(refreshStatus, 15000);
+</script>
+</body>
+</html>

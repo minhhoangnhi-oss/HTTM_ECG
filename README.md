@@ -365,3 +365,88 @@ TV3 đã có code tích hợp, sơ đồ, bảng yêu cầu và kết quả ki�
 - Benchmark API không bao gồm thời gian gọi OpenRouter.
 - Docker suy luận không thay thế môi trường huấn luyện của TV2.
 - Nhãn dự đoán và bản tóm tắt Agent không phải chẩn đoán hoặc đề xuất điều trị.
+
+## Giao diện chat trên trình duyệt
+
+Dự án có giao diện web tại http://127.0.0.1:8000/ khi container API đang chạy.
+
+### Khởi động
+
+Chạy các lệnh PowerShell trong thư mục dự án. Docker Desktop phải đang chạy.
+
+Chuẩn bị file `.env` từ `.env.example` nếu máy chưa có:
+
+```powershell
+Copy-Item .\.env.example .\.env
+```
+
+Điền API key OpenRouter trong `.env`. Không đưa file `.env` hoặc API key lên GitHub.
+
+Máy cần có các thư mục `data`, `logs`, `outputs` và dữ liệu bản ghi 100:
+
+- `data/mitdb/100.dat`
+- `data/mitdb/100.hea`
+- `data/mitdb/100.atr`
+
+Dữ liệu và cấu hình riêng không nằm trong bản tải GitHub. Chuẩn bị dữ liệu theo hướng dẫn tải bản ghi ở phần trên.
+
+Build image:
+
+```powershell
+docker build -t httm-ecg .
+```
+
+Nếu container `httm-ecg-api` đang chạy, dừng trước khi chạy bản mới:
+
+```powershell
+docker stop httm-ecg-api
+```
+
+Chạy container:
+
+```powershell
+docker run -d --rm --name httm-ecg-api --env-file .\.env -p 127.0.0.1:8000:8000 --mount "type=bind,source=$($PWD.Path)\data,target=/app/data,readonly" --mount "type=bind,source=$($PWD.Path)\logs,target=/app/logs" --mount "type=bind,source=$($PWD.Path)\outputs,target=/app/outputs" httm-ecg
+```
+
+Mở giao diện:
+
+```powershell
+Start-Process "http://127.0.0.1:8000/"
+```
+
+### Sử dụng
+
+1. Kiểm tra trạng thái API, API key và dữ liệu bản ghi 100 trên giao diện.
+2. Nhập yêu cầu, ví dụ: “Phân loại bản ghi 100 và tóm tắt số nhịp từng lớp.”
+3. Đợi Agent gọi công cụ và hiển thị kết quả.
+4. Mở “Thông tin lần chạy” để xem công cụ và mô hình LLM thực tế.
+5. Chọn “Lưu báo cáo” hoặc “Bỏ qua lưu” cho từng kết quả.
+
+Báo cáo được lưu vào thư mục `outputs` trên máy nhờ bind mount. Sau khi lưu, có thể tải bản JSON từ giao diện. Nếu bỏ qua, chương trình không tạo tệp báo cáo cho lượt đó.
+
+Bản xem trước được giữ tạm trong bộ nhớ tối đa một giờ và mất khi container khởi động lại. Các báo cáo đã lưu trong thư mục được mount vẫn còn.
+
+### Phạm vi và giới hạn
+
+- Chỉ bản ghi 100 được phép truy cập qua công cụ Agent.
+- Đỉnh R lấy từ chú thích MIT-BIH có sẵn; hệ thống không tự phát hiện đỉnh R.
+- `samples` đếm mẫu tín hiệu; `processed_count`, `skipped_count` và `unclassified_count` đếm nhịp.
+- Mô hình ECG ONNX thực hiện phân loại. LLM điều phối công cụ và tạo bản tóm tắt.
+- API key được dùng ở backend, không gửi xuống giao diện.
+- LLM không có công cụ chạy shell, đọc tệp tùy ý hoặc lưu báo cáo.
+- Chương trình chỉ lưu báo cáo khi người dùng chọn nút lưu.
+- Lời tóm tắt của LLM vẫn cần được đối chiếu với số liệu API.
+- `openrouter/free` có thể chọn mô hình khác nhau giữa các lượt; chất lượng gọi công cụ và thời gian trả lời có thể thay đổi.
+- Thời gian hiển thị trên web gồm cả gọi LLM và công cụ, khác với độ trễ `/predict` trong benchmark.
+- Kết quả phục vụ nghiên cứu và thử nghiệm, không dùng làm chẩn đoán.
+
+### Các tệp bổ sung
+
+| Tệp | Vai trò |
+|---|---|
+| `web/index.html` | Giao diện chat, trạng thái dịch vụ và nút lưu/bỏ báo cáo |
+| `web_agent.py` | Các endpoint `/agent/config`, `/agent/chat`, `/agent/report`; điều phối LLM, công cụ và xác nhận lưu |
+| `main.py` | Cung cấp trang web tại `/`, tích hợp router Agent và giữ API ECG |
+| `Dockerfile` | Đóng gói giao diện, backend và mô hình trong cùng image |
+
+Giao diện web và Agent dòng lệnh `agent_main.py` đều có thể sử dụng.

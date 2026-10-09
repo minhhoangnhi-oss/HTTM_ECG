@@ -232,3 +232,40 @@ Chưa thực hiện đối chiếu toàn bộ DS2 qua API. Chưa đo độ trễ
 API chưa có bộ phát hiện R. Agent hiện chỉ được phép truy cập bản ghi 100.
 
 Hệ thống dùng lọc zero-phase và RR_post nên phục vụ xem lại ECG đã thu nhận, chưa phải xử lý thời gian thực.
+
+## Kiểm tra giao diện web — tối 09/10/2026
+
+Giao diện được chạy trên máy desktop bằng Docker, truy cập tại http://127.0.0.1:8000/.
+
+### Kết quả đã kiểm tra
+
+| Tình huống | Kết quả quan sát |
+|---|---|
+| Phân loại bản ghi 100 qua web | Khớp API: N=2236, S=34, V=1, F=0, Q=0 |
+| Lưu báo cáo bằng nút trên web | Đã kiểm tra file JSON có `source: web`, `confirmed: true`, số liệu API và bản tóm tắt |
+| Bỏ qua lưu | Giao diện thông báo “Đã bỏ qua. Không tạo tệp báo cáo.”; chưa kiểm đếm thư mục độc lập trong lượt này |
+| Yêu cầu phân loại 101 và đọc `.env` bằng shell | Agent từ chối, không trả kết quả phân loại hay nội dung tệp |
+| Chat tiếp nối trên bản backend mới | Nhật ký lượt hiển thị `classify_record: thành công`; trả đúng nguồn đỉnh R, 2271 nhịp xử lý, 2 nhịp bỏ qua, 0 nhịp chưa phân loại |
+| Kiểm tra hồi quy API và giới hạn công cụ | Bộ `check_api_contract.py` đạt 16/16 sau khi thêm web |
+| Đối chiếu bản ghi ECG thật qua API Docker | 2271 nhịp; sai số ECG lớn nhất 7.4505806e-09, RR bằng 0; nhãn khớp và sai số xác suất API bằng 0 |
+
+Báo cáo web đã kiểm tra: `report_55f32cd8a9e1479c97fa2736df100051.json`.
+
+Lượt chat tiếp nối trên bản mới: `93aa0f91d18b40ce98b62dc5f8b137ae`.
+
+### Lỗi phát hiện và điều chỉnh
+
+- Có lượt LLM trả lời mà không gọi công cụ, khiến backend từ chối câu trả lời. Đã thay `tool_choice` để bắt buộc gọi công cụ khi lượt hiện tại chưa có công cụ thành công.
+- Bản tóm tắt ban đầu có cách diễn đạt sai về nguồn đỉnh R, ý nghĩa lớp F và đơn vị đếm nhịp. Đã bổ sung hướng dẫn trong system prompt; các lượt kiểm tra sau trả đúng thông tin được yêu cầu. Đây chưa phải bảo đảm mọi câu trả lời đều chính xác.
+- Một lượt `classify_record` gặp `ValueError`. Gọi trực tiếp công cụ trong container thành công. Nhật ký cũ chưa chứa thông báo lỗi chi tiết nên chưa xác định nguyên nhân; đã bổ sung ghi thông báo `ValueError` để phục vụ điều tra nếu tái diễn.
+- Sau khi cập nhật backend, đã có lượt phân loại và chat tiếp nối thành công. Điều này chưa chứng minh lỗi `ValueError` trước đó đã được giải quyết dứt điểm.
+
+### Giới hạn của kiểm tra
+
+Các tình huống web trên là kiểm tra chức năng thủ công, chưa phải đánh giá toàn diện về độ tin cậy của LLM hoặc an toàn hệ thống.
+
+Chưa đo lại benchmark trên bản có giao diện web. Các số liệu benchmark ở phần trước thuộc bản triển khai trước khi thêm web.
+
+Thời gian hoàn thành hiển thị trên giao diện gồm gọi OpenRouter và công cụ; không được dùng thay cho độ trễ API `/predict`.
+
+Kiểm tra từ chối yêu cầu ngoài quyền đã thực hiện trước lần cập nhật system prompt cuối. Các kiểm tra API và ECG thật đã thực hiện trước lần thay system prompt và bổ sung thông báo lỗi; hai thay đổi này không sửa đường xử lý `/predict`.

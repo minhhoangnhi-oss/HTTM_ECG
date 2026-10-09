@@ -5,7 +5,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
-COPY main.py agent_main.py agent_tools.py model_runner.py preprocessing.py ./
+COPY main.py agent_main.py agent_tools.py model_runner.py preprocessing.py web_agent.py ./
+COPY web/ ./web/
 
 COPY models/tv2/inference_config.json models/tv2/normalization.json models/tv2/preprocess_config.json ./models/tv2/
 COPY models/tv2/exports/cnn_rr_fp32.onnx ./models/tv2/exports/
