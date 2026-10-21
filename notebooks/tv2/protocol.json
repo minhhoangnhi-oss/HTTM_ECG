@@ -1,0 +1,54 @@
+{
+  "dataset": "MIT-BIH Arrhythmia Database",
+  "classes": [
+    "N",
+    "S",
+    "V",
+    "F",
+    "Q"
+  ],
+  "rr_order": [
+    "RR_pre",
+    "RR_post",
+    "RR_local_avg"
+  ],
+  "seeds": [
+    42,
+    123,
+    2026
+  ],
+  "folds": 5,
+  "configs": [
+    {
+      "config_id": "lr_001",
+      "learning_rate": 0.001,
+      "batch_size": 128
+    },
+    {
+      "config_id": "lr_0003",
+      "learning_rate": 0.0003,
+      "batch_size": 128
+    }
+  ],
+  "max_epochs": 30,
+  "patience": 7,
+  "optimizer": "Adam",
+  "loss": "weighted_cross_entropy",
+  "checkpoint_metric": "validation_f1_macro",
+  "checkpoint_tie_rule": "keep_earliest_epoch",
+  "configuration_selection": "highest_mean_cv_f1_across_both_models_and_seeds",
+  "final_epoch_rule": "ceil_median_best_epoch_of_selected_configuration",
+  "decision_rule": "argmax",
+  "hypothesis": "Bổ sung RR có thể giúp phân biệt các nhịp có hình dạng gần giống nhau nhưng khác thời điểm xuất hiện.",
+  "deployment_variant": "cnn_rr",
+  "deployment_seed": 42,
+  "deployment_format": "onnx_fp32",
+  "int8_role": "quantization_comparison",
+  "excluded_paced_records": [
+    "102",
+    "104",
+    "107",
+    "217"
+  ],
+  "excluded_test_record": "202"
+}

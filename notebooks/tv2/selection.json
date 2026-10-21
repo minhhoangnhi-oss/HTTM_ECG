@@ -1,0 +1,11 @@
+{
+  "configuration": {
+    "config_id": "lr_001",
+    "learning_rate": 0.001,
+    "batch_size": 128
+  },
+  "final_epochs": 4,
+  "selection_data": "DS1_only",
+  "selection_rule": "highest_mean_cv_f1_across_both_models_and_seeds",
+  "final_epoch_rule": "ceil_median_best_epoch_of_selected_configuration"
+}
