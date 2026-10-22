@@ -187,9 +187,60 @@ def run_conversation(data, run_id, key, model):
                     raise AgentError("Agent chưa trả lời. Hãy thử lại.")
 
                 if successful_tools == 0:
-                    raise AgentError(
-                        "Agent chưa lấy dữ liệu từ công cụ. Hãy thử lại."
+                    # Some routed models ignore tool_choice="required".
+                    # Discard their ungrounded reply and fetch the allowlist.
+                    audit(
+                        run_id,
+                        "tool_requested",
+                        tool="list_records",
+                        initiated_by="backend_fallback",
                     )
+                    try:
+                        records = execute_tool("list_records", {})
+                    except (
+                        ValueError, KeyError, TypeError, OSError, httpx.HTTPError
+                    ) as error:
+                        audit(
+                            run_id,
+                            "tool_error",
+                            tool="list_records",
+                            error_type=type(error).__name__,
+                            initiated_by="backend_fallback",
+                        )
+                        raise AgentError(
+                            "Không lấy được danh sách bản ghi được phép. "
+                            "Chưa có kết quả phân loại."
+                        ) from error
+
+                    successful_tools += 1
+                    tool_count += 1
+                    tool_events.append({
+                        "tool": "list_records",
+                        "status": "success",
+                    })
+                    audit(
+                        run_id,
+                        "tool_success",
+                        tool="list_records",
+                        record_id=None,
+                        mode=None,
+                        initiated_by="backend_fallback",
+                    )
+                    messages.append({
+                        "role": "system",
+                        "content": (
+                            "Chương trình vừa thực sự gọi list_records. "
+                            "Kết quả công cụ: "
+                            + json.dumps(records, ensure_ascii=False)
+                            + "\nHãy trả lời lại yêu cầu hiện tại dựa trên "
+                            "danh sách này. Nếu bản ghi ngoài danh sách, "
+                            "nói rõ không được phép truy cập, không phân loại "
+                            "bản ghi khác thay thế. Nếu cần phân loại bản ghi "
+                            "hợp lệ, phải gọi classify_record. Chưa có số liệu "
+                            "phân loại cho tới khi công cụ đó thành công."
+                        ),
+                    })
+                    continue
 
                 return last_result, summary.strip(), models_used, tool_events
 
