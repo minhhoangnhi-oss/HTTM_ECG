@@ -1,5 +1,7 @@
 # Bảng yêu cầu kỹ thuật — HTTM_ECG
 
+> Cập nhật phạm vi demo ngày 22/10/2026: giao diện và Agent được mở rộng sang 21 bản ghi DS2, có bộ chọn bản ghi và trạng thái dữ liệu. DS1 và 202 không được mở quyền. Các phép đo/kiểm thử ghi bên dưới vẫn thuộc đúng phiên bản và thời điểm đã nêu; đã đối chiếu API trên laptop: 21/21 bản khớp số nhịp và số lượng nhãn với bảng TV2. Xem [DS2_DEMO_GUIDE.md](DS2_DEMO_GUIDE.md) và chạy `check_ds2_records.py` để đối chiếu.
+
 ## 1. Phạm vi và thời điểm lập
 
 Hệ thống hỗ trợ phân loại nhịp trên bản ghi ECG đã thu nhận, dùng dữ liệu MIT-BIH và vị trí đỉnh R từ tệp chú thích.
@@ -207,4 +209,4 @@ Bảng ở mục 7 là ghi nhận tại thời điểm lập đặc tả, không
 
 Đã có notebook/code và cấu hình cho TV1/TV2 trong kho mã. Bootstrap cố định năm lớp, 1.000 lượt theo bản ghi, đủ sáu cặp mô hình–seed. Đánh giá 202 là bổ sung trên mô hình cố định; DS2 chính vẫn loại 202 để tránh trùng người với 201.
 
-Còn chưa xác nhận: chạy lại đầy đủ theo hướng dẫn trên môi trường mới cài. Chưa đối chiếu toàn DS2 qua HTTP API. Đây là hai phạm vi khác nhau: không dùng phép đối chiếu ONNX toàn DS2 để khẳng định đã kiểm tra API toàn DS2. Cách chuẩn bị và chạy lại nằm tại REPRODUCIBILITY.md.
+Đã đối chiếu API trên laptop với đủ 21 bản DS2, tổng 47.557 nhịp: số nhịp và số lượng nhãn từng lớp khớp bảng TV2. Phép đối chiếu không so xác suất từng nhịp. Hướng dẫn chạy lại nằm tại REPRODUCIBILITY.md.

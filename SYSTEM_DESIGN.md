@@ -1,5 +1,7 @@
 # Thiết kế hệ thống — HTTM_ECG
 
+> Cập nhật phạm vi demo ngày 22/10/2026: giao diện và Agent được mở rộng sang 21 bản ghi DS2, có bộ chọn bản ghi và trạng thái dữ liệu. DS1 và 202 không được mở quyền. Các phép đo/kiểm thử ghi bên dưới vẫn thuộc đúng phiên bản và thời điểm đã nêu; đã đối chiếu API trên laptop: 21/21 bản khớp số nhịp và số lượng nhãn với bảng TV2. Xem [DS2_DEMO_GUIDE.md](DS2_DEMO_GUIDE.md) và chạy `check_ds2_records.py` để đối chiếu.
+
 ## 1. Mục đích và phạm vi
 
 Hệ thống phân loại nhịp ECG từ bản ghi đã thu nhận, sử dụng phần tiền xử lý của TV1 và mô hình CNN + RR của TV2.
@@ -213,7 +215,7 @@ Các quy ước đầu vào, mục tiêu và phương pháp đo nằm trong TECH
 
 - filtfilt và RR_post cần dữ liệu sau thời điểm nhịp; hệ thống phục vụ xem lại bản ghi.
 
-- Agent chỉ hỗ trợ bản ghi 100 trong danh sách cố định.
+- Agent hỗ trợ đúng 21 bản ghi DS2 trong danh sách cố định; mỗi lượt một bản ghi.
 
 - Đối chiếu end-to-end dữ liệu thật mới thực hiện trên bản ghi 100.
 
@@ -292,4 +294,4 @@ Tiền xử lý TV1 tạo DS1/DS2 chưa Z-score. TV2 chia fold trong DS1, fit ch
 
 `benchmark_model_comparison.py` đo forward + softmax của hai checkpoint seed 42 trên cùng backend PyTorch CPU; khác phép đo HTTP/ONNX trong `benchmark_api.py`. Bảng bổ sung có/không 202 và benchmark CPU nằm tại reports/. Hướng dẫn chạy lại: REPRODUCIBILITY.md.
 
-Việc cập nhật tài liệu và tách notebook không phải bằng chứng chạy lại toàn chuỗi trên môi trường sạch. Mô hình, chuẩn hóa và đường xử lý API giữ nguyên trong lần cập nhật này.
+Mô hình, chuẩn hóa và đường xử lý API giữ nguyên trong lần cập nhật này.

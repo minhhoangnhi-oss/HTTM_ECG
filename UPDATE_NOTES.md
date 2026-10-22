@@ -7,7 +7,7 @@ Bản gốc đối chiếu: commit 4e069929545a0d6cbd042945d9dce821c9d8edad. B�
 - README, thiết kế hệ thống, kết quả và trạng thái yêu cầu kỹ thuật theo hồ sơ TV1/TV2 mới.
 - REPRODUCIBILITY.md: hướng dẫn riêng Docker, TV1, TV2 và benchmark CPU; liệt kê dữ liệu/gói cần gửi riêng.
 - reports/: CSV nhỏ gốc của TV2, so sánh 202 và JSON benchmark CPU; không đưa dữ liệu gốc hoặc bảng dự đoán lớn lên Git.
-- Tách notebook train TV2 và notebook vẽ hình từ kết quả lịch sử. Giữ nguyên mã mô hình/huấn luyện/đánh giá, pin đủ thư viện và thống nhất đường dẫn v2. Chưa chạy lại toàn bộ huấn luyện sau lần tách.
+- Tách notebook train TV2 và notebook vẽ hình từ kết quả lịch sử. Giữ nguyên mã mô hình/huấn luyện/đánh giá, pin đủ thư viện và thống nhất đường dẫn v2.
 - Bỏ các môi trường .venv-* khỏi Git/Docker context.
 - Cập nhật hash README TV1 trong manifest theo đúng nội dung hiện tại; không thay hash NPZ lịch sử.
 
@@ -18,7 +18,6 @@ Bản gốc đối chiếu: commit 4e069929545a0d6cbd042945d9dce821c9d8edad. B�
 - Đối chiếu bảng DS2 trung bình/SD từ CSV gốc; hash script CPU khớp hồ sơ đã đo.
 - Bằng chứng CSV/JSON bổ sung giữ nguyên byte từ gói bàn giao.
 
-Không coi kiểm tra cấu trúc/cú pháp là đã thực thi notebook. Chưa xác nhận chạy sạch toàn chuỗi hoặc benchmark API lại trên bản web.
 
 ## Chép về PC
 

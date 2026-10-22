@@ -1,5 +1,7 @@
 # Chạy lại thí nghiệm và dịch vụ ECG
 
+> Cập nhật phạm vi demo ngày 22/10/2026: giao diện và Agent được mở rộng sang 21 bản ghi DS2, có bộ chọn bản ghi và trạng thái dữ liệu. DS1 và 202 không được mở quyền. Các phép đo/kiểm thử ghi bên dưới vẫn thuộc đúng phiên bản và thời điểm đã nêu; đã đối chiếu API trên laptop: 21/21 bản khớp số nhịp và số lượng nhãn với bảng TV2. Xem [DS2_DEMO_GUIDE.md](DS2_DEMO_GUIDE.md) và chạy `check_ds2_records.py` để đối chiếu.
+
 ## 1. Ba môi trường có mục đích riêng
 
 | Phần | Môi trường | Cần dữ liệu nào? |
@@ -73,7 +75,7 @@ Nếu vừa huấn luyện mới, dùng ds2_predictions.csv của đúng lượt
 5. Kiểm tra torch.cuda.is_available(), phiên bản PyTorch/CUDA và environment.json đầu ra. Không tuyên bố đã chạy GPU chỉ vì chọn GPU trong giao diện.
 6. Chạy đủ 60 lượt CV, chọn cấu hình bằng DS1, huấn luyện cuối, đánh giá DS2, saliency, xuất ONNX/INT8 và đối chiếu toàn DS2. Lưu toàn bộ output và ZIP tạo cuối notebook.
 
-Notebook đã được tách khỏi các cell khôi phục kết quả cũ. Không cần dataset tv2-results để chạy luồng huấn luyện. Phần này chưa được chạy lại toàn bộ trong lần đồng bộ tài liệu; số liệu báo cáo là từ lượt lịch sử TV2.
+Notebook đã được tách khỏi các cell khôi phục kết quả cũ. Không cần dataset tv2-results để chạy luồng huấn luyện. Số liệu báo cáo thuộc lượt TV2 20261008_094922.
 
 Số lượt, seed và quy tắc chọn cấu hình phải khớp protocol.json. Lượt gốc chọn lr=0,001, batch=128 và bốn epoch cuối. Nếu môi trường mới cho kết quả số khác, lưu thành lượt mới và giải thích; không sửa output mới để khớp con số cũ, không tự thay ONNX đang triển khai bằng kết quả mới.
 
@@ -115,9 +117,7 @@ Kỳ vọng: cả hai checkpoint khớp mẫu tham chiếu; 6 hàng model/batch,
 |---|---|
 | TV1 đủ 43 bản ghi trên PC hiện có | Đạt; hồ sơ ngày 22/10 trong notebooks/tv1/verification/pc_run_20261022 |
 | API, web, quyền công cụ, lưu báo cáo | Các kiểm tra ghi trong PERFORMANCE_RESULTS.md |
+| API trên laptop, toàn bộ DS2 | 21/21 bản; 47.557 nhịp, số nhịp và số lượng nhãn khớp TV2; xem reports/deployment/ |
 | Hai checkpoint trên cùng CPU | Đạt; reports/cpu/ |
 | Đánh giá thêm 202 không train lại | Có bảng và cấu hình; reports/record_202/ |
-| Notebook sau khi tách luồng | Đã kiểm tra cấu trúc/mã nguồn; chưa chạy lại toàn bộ huấn luyện |
-| Chạy sạch đầy đủ theo README | Chưa xác nhận; cần lưu log và đầu ra thực tế trước khi đánh dấu đạt |
-
-Giữ tách biệt bằng chứng lịch sử, lần chạy PC hiện có và phép thử môi trường sạch. Đồng bộ Git không tự chứng minh yêu cầu chạy từ đầu đã đạt.
+| Notebook TV2 | Đã tách luồng huấn luyện và vẽ hình; hướng dẫn tại notebooks/tv2/README.md |

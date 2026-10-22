@@ -1,0 +1,598 @@
+{
+  "checked_at": "2026-10-22T15:05:32.308489+00:00",
+  "model_sha256": "7d19389f652832c31e94cd6f1b168dd64e1d27df68fa573efbb4768cd5ca20cf",
+  "passed_count": 21,
+  "total_count": 21,
+  "all_passed": true,
+  "scope": "Per-record predicted counts via API versus historical TV2 CNN+RR seed42. This is not per-beat probability equality or a new training run.",
+  "records": [
+    {
+      "record_id": "100",
+      "passed": true,
+      "api_result": {
+        "record_id": "100",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2273,
+        "processed_count": 2271,
+        "skipped_count": 2,
+        "class_counts": {
+          "N": 2236,
+          "S": 34,
+          "V": 1,
+          "F": 0,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "103",
+      "passed": true,
+      "api_result": {
+        "record_id": "103",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2084,
+        "processed_count": 2083,
+        "skipped_count": 1,
+        "class_counts": {
+          "N": 2082,
+          "S": 1,
+          "V": 0,
+          "F": 0,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "105",
+      "passed": true,
+      "api_result": {
+        "record_id": "105",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2572,
+        "processed_count": 2572,
+        "skipped_count": 0,
+        "class_counts": {
+          "N": 2304,
+          "S": 15,
+          "V": 155,
+          "F": 98,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "111",
+      "passed": true,
+      "api_result": {
+        "record_id": "111",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2124,
+        "processed_count": 2124,
+        "skipped_count": 0,
+        "class_counts": {
+          "N": 2119,
+          "S": 3,
+          "V": 2,
+          "F": 0,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "113",
+      "passed": true,
+      "api_result": {
+        "record_id": "113",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 1795,
+        "processed_count": 1794,
+        "skipped_count": 1,
+        "class_counts": {
+          "N": 1752,
+          "S": 33,
+          "V": 9,
+          "F": 0,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "117",
+      "passed": true,
+      "api_result": {
+        "record_id": "117",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 1535,
+        "processed_count": 1534,
+        "skipped_count": 1,
+        "class_counts": {
+          "N": 1533,
+          "S": 1,
+          "V": 0,
+          "F": 0,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "121",
+      "passed": true,
+      "api_result": {
+        "record_id": "121",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 1863,
+        "processed_count": 1862,
+        "skipped_count": 1,
+        "class_counts": {
+          "N": 1859,
+          "S": 1,
+          "V": 2,
+          "F": 0,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "123",
+      "passed": true,
+      "api_result": {
+        "record_id": "123",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 1518,
+        "processed_count": 1517,
+        "skipped_count": 1,
+        "class_counts": {
+          "N": 1472,
+          "S": 42,
+          "V": 3,
+          "F": 0,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "200",
+      "passed": true,
+      "api_result": {
+        "record_id": "200",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2601,
+        "processed_count": 2600,
+        "skipped_count": 1,
+        "class_counts": {
+          "N": 1671,
+          "S": 157,
+          "V": 768,
+          "F": 4,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "210",
+      "passed": true,
+      "api_result": {
+        "record_id": "210",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2650,
+        "processed_count": 2648,
+        "skipped_count": 2,
+        "class_counts": {
+          "N": 1938,
+          "S": 538,
+          "V": 85,
+          "F": 87,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "212",
+      "passed": true,
+      "api_result": {
+        "record_id": "212",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2748,
+        "processed_count": 2747,
+        "skipped_count": 1,
+        "class_counts": {
+          "N": 2676,
+          "S": 71,
+          "V": 0,
+          "F": 0,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "213",
+      "passed": true,
+      "api_result": {
+        "record_id": "213",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 3251,
+        "processed_count": 3250,
+        "skipped_count": 1,
+        "class_counts": {
+          "N": 913,
+          "S": 262,
+          "V": 179,
+          "F": 1896,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "214",
+      "passed": true,
+      "api_result": {
+        "record_id": "214",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2262,
+        "processed_count": 2260,
+        "skipped_count": 2,
+        "class_counts": {
+          "N": 1798,
+          "S": 11,
+          "V": 257,
+          "F": 194,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "219",
+      "passed": true,
+      "api_result": {
+        "record_id": "219",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2154,
+        "processed_count": 2154,
+        "skipped_count": 0,
+        "class_counts": {
+          "N": 1622,
+          "S": 472,
+          "V": 58,
+          "F": 2,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "221",
+      "passed": true,
+      "api_result": {
+        "record_id": "221",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2427,
+        "processed_count": 2427,
+        "skipped_count": 0,
+        "class_counts": {
+          "N": 1668,
+          "S": 321,
+          "V": 391,
+          "F": 47,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "222",
+      "passed": true,
+      "api_result": {
+        "record_id": "222",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2483,
+        "processed_count": 2481,
+        "skipped_count": 2,
+        "class_counts": {
+          "N": 1573,
+          "S": 882,
+          "V": 15,
+          "F": 11,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "228",
+      "passed": true,
+      "api_result": {
+        "record_id": "228",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2053,
+        "processed_count": 2053,
+        "skipped_count": 0,
+        "class_counts": {
+          "N": 1655,
+          "S": 25,
+          "V": 372,
+          "F": 1,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "231",
+      "passed": true,
+      "api_result": {
+        "record_id": "231",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 1571,
+        "processed_count": 1570,
+        "skipped_count": 1,
+        "class_counts": {
+          "N": 1365,
+          "S": 198,
+          "V": 7,
+          "F": 0,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "232",
+      "passed": true,
+      "api_result": {
+        "record_id": "232",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 1780,
+        "processed_count": 1780,
+        "skipped_count": 0,
+        "class_counts": {
+          "N": 577,
+          "S": 1196,
+          "V": 7,
+          "F": 0,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "233",
+      "passed": true,
+      "api_result": {
+        "record_id": "233",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 3079,
+        "processed_count": 3077,
+        "skipped_count": 2,
+        "class_counts": {
+          "N": 916,
+          "S": 231,
+          "V": 595,
+          "F": 1335,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    },
+    {
+      "record_id": "234",
+      "passed": true,
+      "api_result": {
+        "record_id": "234",
+        "dataset_split": "DS2",
+        "source": "physionet_mit_bih",
+        "fs": 360,
+        "samples": 650000,
+        "duration_seconds": 1805.5555555555557,
+        "channel": "MLII",
+        "amplitude_unit": "mV",
+        "r_peak_source": "provided_annotations",
+        "mode": "onnx",
+        "model_version": "20261008_094922",
+        "r_peak_count": 2753,
+        "processed_count": 2753,
+        "skipped_count": 0,
+        "class_counts": {
+          "N": 2707,
+          "S": 32,
+          "V": 3,
+          "F": 11,
+          "Q": 0
+        },
+        "unclassified_count": 0
+      }
+    }
+  ]
+}

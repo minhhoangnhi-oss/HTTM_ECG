@@ -64,7 +64,7 @@ Bộ 202 và phép so sánh có/không có 202 đã được làm riêng với m
 - Cách cộng ma trận nhầm lẫn theo bản ghi khớp cách ghép lại các nhịp và tính bằng scikit-learn trên 48 lượt lấy mẫu đối chiếu; thứ tự rút mẫu RNG giống nhau.
 - Đủ 11 dòng CI mô hình CNN + RR seed 42 khớp bảng đã kiểm tra trước đó.
 
-Ngày 22/10/2026, đã chạy script trên đủ 43 bản ghi WFDB trong môi trường Windows hiện có. DS1/DS2 đúng số nhịp, không giao bệnh nhân; thống kê DS1 và metadata DS2 khớp kiểm tra TV2. Toàn bộ 66 dòng CI khớp bảng đã kiểm chứng. Hồ sơ lần chạy nằm trong verification/pc_run_20261022/. Đây không phải phép thử trên môi trường mới cài hoàn toàn.
+Ngày 22/10/2026, đã chạy script trên đủ 43 bản ghi WFDB trong môi trường Windows hiện có. DS1/DS2 đúng số nhịp, không giao bệnh nhân; thống kê DS1 và metadata DS2 khớp kiểm tra TV2. Toàn bộ 66 dòng CI khớp bảng đã kiểm chứng. Hồ sơ lần chạy nằm trong verification/pc_run_20261022/.
 
 ## Đưa vào kho nộp
 

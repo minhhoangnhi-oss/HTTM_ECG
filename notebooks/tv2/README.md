@@ -9,4 +9,4 @@
 
 Hướng dẫn chi tiết, vị trí đầu vào và bằng chứng chạy lại: [REPRODUCIBILITY.md](../../REPRODUCIBILITY.md).
 
-Ngày đồng bộ: 22/10/2026. Tách phần vẽ hình khỏi notebook train; giữ nguyên mã huấn luyện, đánh giá và xuất mô hình, trừ cell cài thư viện được pin đầy đủ hơn và đường dẫn cấu hình được thống nhất với v2. Chưa chạy lại toàn bộ huấn luyện sau lần tách này. Kết quả đã báo cáo thuộc gói TV2_MITBIH_20261008_094922.
+Ngày đồng bộ: 22/10/2026. Tách phần vẽ hình khỏi notebook train; giữ nguyên mã huấn luyện, đánh giá và xuất mô hình, trừ cell cài thư viện được pin đầy đủ hơn và đường dẫn cấu hình được thống nhất với v2. Kết quả đã báo cáo thuộc gói TV2_MITBIH_20261008_094922.

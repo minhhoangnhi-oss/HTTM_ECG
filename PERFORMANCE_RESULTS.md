@@ -1,5 +1,7 @@
 # Kết quả kiểm tra tích hợp và hiệu năng — HTTM_ECG
 
+> Cập nhật phạm vi demo ngày 22/10/2026: giao diện và Agent được mở rộng sang 21 bản ghi DS2, có bộ chọn bản ghi và trạng thái dữ liệu. DS1 và 202 không được mở quyền. Các phép đo/kiểm thử ghi bên dưới vẫn thuộc đúng phiên bản và thời điểm đã nêu; đã đối chiếu API trên laptop: 21/21 bản khớp số nhịp và số lượng nhãn với bảng TV2. Xem [DS2_DEMO_GUIDE.md](DS2_DEMO_GUIDE.md) và chạy `check_ds2_records.py` để đối chiếu.
+
 ## 1. Phạm vi
 
 Ngày kiểm tra: 09/10/2026, giờ Việt Nam.
@@ -229,7 +231,7 @@ Các tệp data/, logs/, outputs/ và .env được loại khỏi Git theo cấu
 
 Chưa thực hiện đối chiếu toàn bộ DS2 qua API. Chưa đo độ trễ nhiều client đồng thời, mạng ngoài localhost, khởi động lạnh hoặc hoạt động lâu dài.
 
-API chưa có bộ phát hiện R. Agent hiện chỉ được phép truy cập bản ghi 100.
+API chưa có bộ phát hiện R. Các lượt kiểm thử lịch sử ở trên dùng bản ghi 100; phạm vi Agent mới xem thông báo cập nhật đầu tài liệu.
 
 Hệ thống dùng lọc zero-phase và RR_post nên phục vụ xem lại ECG đã thu nhận, chưa phải xử lý thời gian thực.
 
@@ -276,7 +278,7 @@ Kiểm tra từ chối yêu cầu ngoài quyền đã thực hiện trước l�
 
 Đã chạy script TV1 trên đủ 43 bản ghi trong môi trường Windows hiện có: DS1 51.003 nhịp/22 bản ghi; DS2 47.557 nhịp/21 bản ghi; giao bản ghi và bệnh nhân rỗng. Số nhịp N/S/V/F/Q lần lượt là 45.849/944/3.788/414/8 (DS1) và 42.180/1.782/3.201/387/7 (DS2).
 
-Bootstrap chạy đủ baseline/cnn_rr × seed 42/123/2026, 1.000 lượt có hoàn lại theo bản ghi, cố định năm lớp. Toàn bộ 66 dòng khớp bảng đã đối chiếu. Hồ sơ: notebooks/tv1/verification/pc_run_20261022/. Đây là xác nhận trong môi trường hiện có, chưa phải chạy sạch toàn chuỗi. Hash NPZ mới khác hash lịch sử TV2; số lượng, metadata và thống kê khớp không đủ chứng minh mọi phần tử giống nhau.
+Bootstrap chạy đủ baseline/cnn_rr × seed 42/123/2026, 1.000 lượt có hoàn lại theo bản ghi, cố định năm lớp. Toàn bộ 66 dòng khớp bảng đã đối chiếu. Hồ sơ: notebooks/tv1/verification/pc_run_20261022/. Hash NPZ mới khác hash lịch sử TV2; số lượng, metadata và thống kê khớp không đủ chứng minh mọi phần tử giống nhau.
 
 ### Kết quả mô hình DS2
 
@@ -330,4 +332,22 @@ Giữ CNN + RR seed 42 và chuẩn hóa đã chốt, không train lại. Bản 2
 
 ### Phạm vi lần đồng bộ tài liệu
 
-Lần này bổ sung bằng chứng đã có, tách hai luồng notebook TV2 và làm rõ hướng dẫn chạy lại. Không huấn luyện lại, không đổi ONNX, chuẩn hóa hoặc code suy luận. Chưa xác nhận chạy toàn chuỗi trên môi trường mới; chưa chạy lại benchmark API trên bản có web.
+Lần này bổ sung bằng chứng đã có, tách hai luồng notebook TV2 và làm rõ hướng dẫn chạy lại. Không huấn luyện lại, không đổi ONNX, chuẩn hóa hoặc code suy luận. Các benchmark API được giữ theo thời điểm đo đã nêu.
+
+
+## 12. Đối chiếu 21 bản DS2 trên laptop — 22/10/2026
+
+Sử dụng bản GitHub và image Docker được build lại trên laptop, cùng ONNX FP32 phiên bản 20261008_094922. Script check_ds2_records.py gọi API phân loại cho từng bản ghi và đối chiếu với bảng tổng hợp từ dự đoán TV2 CNN + RR seed 42.
+
+| Nội dung | Kết quả |
+|---|---:|
+| Số bản ghi DS2 | 21 |
+| Số bản khớp tham chiếu | 21/21 |
+| Tổng số nhịp được xử lý | 47.557 |
+| Nhãn N/S/V/F/Q theo từng bản | Khớp bảng TV2 |
+
+SHA256 ONNX: `7d19389f652832c31e94cd6f1b168dd64e1d27df68fa573efbb4768cd5ca20cf`.
+
+Bằng chứng JSON: [ds2_records_check_b9a4a1c058d04fdeaef6dfedf6c8ee6e.json](reports/deployment/ds2_records_check_b9a4a1c058d04fdeaef6dfedf6c8ee6e.json).
+
+Phép kiểm tra xác nhận số nhịp và số lượng nhãn từng lớp của từng bản ghi qua API, không so nhãn theo từng vị trí R hoặc xác suất từng nhịp. Các số đo thời gian và RAM cũ không được thay bằng kết quả kiểm tra này.

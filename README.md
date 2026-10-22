@@ -1,85 +1,33 @@
-# HTTM_ECG — API và AI Agent phân loại nhịp ECG
+# HTTM_ECG — Phát hiện loạn nhịp ECG trên dữ liệu MIT-BIH
 
-Dự án môn Hệ thống thông minh, sử dụng dữ liệu ECG MIT-BIH.
+Dự án môn **Hệ thống thông minh**, xây dựng hệ thống phân loại từng nhịp ECG vào năm nhóm **N, S, V, F, Q**. Nhóm sử dụng CNN 1D kết hợp đặc trưng khoảng cách giữa các nhịp tim (RR), sau đó đưa mô hình vào một dịch vụ có giao diện chat trên trình duyệt.
 
-Repository tích hợp tiền xử lý của TV1, mô hình CNN + RR của TV2, API FastAPI, Docker và AI Agent gọi công cụ qua OpenRouter.
+Giao diện cho chọn 21 bản ghi thuộc tập kiểm tra DS2. Người dùng có thể yêu cầu phân tích bản ghi, xem số nhịp dự đoán theo từng lớp và chọn lưu báo cáo JSON. **Mô hình ECG thực hiện phân loại; AI Agent gọi công cụ và tóm tắt kết quả bằng tiếng Việt.**
 
-Phiên bản hiện tại chạy mô hình ONNX FP32 thật trên CPU, không còn dùng mock trong API.
+Mô hình triển khai hiện tại là **CNN + RR, seed 42, ONNX FP32**, phiên bản `20261008_094922`, chạy trên CPU. Kết quả phục vụ học tập và nghiên cứu, không dùng làm chẩn đoán bệnh.
 
-## 1. Trạng thái hiện tại
+## 1. Nên bắt đầu từ đâu?
 
-| Thành phần | Trạng thái |
+| Bạn muốn làm gì? | Đọc phần nào? |
 |---|---|
-| Tiền xử lý ECG và RR | Đã tích hợp theo notebook TV1 |
-| CNN + RR ONNX FP32 | Đã tích hợp, phiên bản 20261008_094922 |
-| API /health và /predict | Đã chạy trên máy và trong Docker |
-| Đối chiếu dữ liệu thật | Đã kiểm tra bản ghi 100 trên 2.271 nhịp |
-| Agent trên ECG thật | Đã chạy trên máy và trong Docker |
-| Xác nhận trước khi lưu | Đã thử lưu báo cáo bằng y |
-| Kiểm tra API và giới hạn công cụ | 16/16 kiểm tra đạt |
-| Benchmark API | 100/100 request thành công |
-| Tải tương đương khoảng một giờ | Đã đo bằng hai lượt bản ghi 100 |
-| Đối chiếu toàn bộ DS2 qua API | Chưa thực hiện |
-| Notebook huấn luyện và đánh giá TV2 | Có tại notebooks/tv2/; tách riêng notebook vẽ hình |
-| Tái tạo TV1 trên PC ngày 22/10 | Đủ 43 bản ghi; DS1/DS2 và 66 dòng CI đã đối chiếu |
-| So sánh CPU CNN/CNN + RR | Đã đo cùng backend PyTorch CPU, seed 42 |
-| Đánh giá bổ sung bản ghi 202 | Có bảng so sánh, không train lại |
-| Chạy toàn chuỗi trên môi trường mới cài | Chưa xác nhận |
+| Mở web và chạy thử | [Mục 2](#2-mở-web-và-chạy-thử) |
+| Biết nên hỏi Agent như thế nào | [Mục 3](#3-sử-dụng-giao-diện-chat) |
+| Tắt chương trình hoặc mở lại hôm sau | [Mục 4](#4-tắt-và-mở-lại) |
+| Kiểm tra API và kết quả tích hợp | [Mục 5](#5-kiểm-tra-api-và-kết-quả-tích-hợp) |
+| Chạy lại tiền xử lý, huấn luyện hoặc vẽ hình | [Mục 6](#6-chạy-lại-thí-nghiệm-của-nhóm) |
+| Xem kết quả đã có và phạm vi đã kiểm tra | [Mục 7](#7-kết-quả-đã-ghi-nhận) |
 
-Docker này phục vụ suy luận và chạy Agent. Đây không phải môi trường huấn luyện GPU cho TV1/TV2.
+## 2. Mở web và chạy thử
 
-## 2. Tài liệu cần đọc
+Các lệnh dưới đây dùng **PowerShell trên Windows**. Chạy từng khối lệnh riêng, trong thư mục dự án có `Dockerfile`, `main.py` và `requirements.txt`.
 
-- [SYSTEM_DESIGN.md](SYSTEM_DESIGN.md): sơ đồ hệ thống, luồng dữ liệu và trách nhiệm các thành viên.
-- [TECHNICAL_REQUIREMENTS.md](TECHNICAL_REQUIREMENTS.md): quy ước dữ liệu, giao diện và mục tiêu đo.
-- [REPRODUCIBILITY.md](REPRODUCIBILITY.md): đầu vào, môi trường và cách chạy lại TV1/TV2/CPU.
-- [reports/README.md](reports/README.md): bằng chứng số liệu được lưu cùng kho mã.
-- [PERFORMANCE_RESULTS.md](PERFORMANCE_RESULTS.md): kết quả tích hợp, benchmark, cấu hình máy và giới hạn.
+### Bước 1 — Chuẩn bị máy và mã nguồn
 
-Bảng trạng thái trong TECHNICAL_REQUIREMENTS.md ghi nhận thời điểm lập đặc tả trước benchmark. Kết quả đo sau đó nằm trong PERFORMANCE_RESULTS.md.
+Máy cần Docker Desktop với **Linux Engine đang chạy**. Trên Windows, cần bật ảo hóa và WSL theo hướng dẫn của Docker Desktop. Cần mạng để tải thư viện lần đầu, tải bản ghi ECG và gọi OpenRouter.
 
-## 3. Cấu trúc repository
+**Chỉ chạy bản demo bằng Docker thì không cần cài Python hoặc PyTorch trên Windows.**
 
-| Tệp hoặc thư mục | Nội dung |
-|---|---|
-| main.py | API FastAPI |
-| preprocessing.py | Lọc, RR và cắt nhịp theo TV1 |
-| model_runner.py | Chuẩn hóa và chạy ONNX |
-| agent_tools.py | Công cụ được phép, đọc bản ghi và tổng hợp số liệu |
-| agent_main.py | Điều phối LLM, audit và xác nhận lưu |
-| check_openrouter.py | Kiểm tra kết nối OpenRouter |
-| check_tv2_model.py | Đối chiếu sample_io với TV2 |
-| check_real_ecg.py | Đối chiếu bản ghi thật với TV1 và API |
-| check_api_contract.py | Kiểm tra giao diện và giới hạn công cụ |
-| benchmark_api.py | Benchmark API và tài nguyên |
-| benchmark_model_comparison.py | So sánh CNN/CNN + RR trên cùng CPU |
-| notebooks/tv1/ | Tiền xử lý, bootstrap và hồ sơ xác nhận |
-| notebooks/tv2/ | Huấn luyện, đánh giá, vẽ hình và cấu hình thí nghiệm |
-| reports/ | Bảng kết quả TV2, so sánh 202 và benchmark CPU |
-| models/tv2/ | Cấu hình, chuẩn hóa và ONNX triển khai |
-| data/ | Dữ liệu cục bộ, không commit mặc định |
-| logs/ | Nhật ký Agent, không commit mặc định |
-| outputs/ | Báo cáo và bằng chứng, không commit mặc định |
-| .env.example | Mẫu biến môi trường |
-| Dockerfile | Đóng gói API và Agent |
-| requirements.txt | Thư viện Python |
-
-## 4. Chạy trên máy mới bằng Docker
-
-### 4.1. Chuẩn bị
-
-Cần:
-
-- Docker Desktop với Linux Engine đang chạy.
-- WSL và ảo hóa đã được bật nếu dùng Docker Desktop trên Windows.
-- Mạng cho lần build đầu, tải bản ghi và gọi OpenRouter.
-- API key OpenRouter để chạy Agent.
-
-Không cần cài Python trên máy chủ nếu chỉ chạy API và Agent bằng Docker.
-
-Có thể tải ZIP repository từ GitHub rồi giải nén. Thư mục làm việc phải chứa Dockerfile, main.py và requirements.txt.
-
-Nếu đã có Git, có thể dùng:
+Tải ZIP từ GitHub rồi giải nén. Nếu dùng Git, có thể tải bằng:
 
 ```powershell
 git clone https://github.com/minhhoangnhi-oss/HTTM_ECG.git
@@ -89,19 +37,29 @@ git clone https://github.com/minhhoangnhi-oss/HTTM_ECG.git
 cd .\HTTM_ECG
 ```
 
-### 4.2. Tạo biến môi trường
-
-Chỉ chạy lệnh sao chép khi chưa có .env, tránh ghi đè cấu hình đang dùng:
+Kiểm tra Docker đã hoạt động:
 
 ```powershell
-Copy-Item .\.env.example .\.env
+docker version
 ```
+
+Kết quả cần có cả phần `Client` và `Server`. Nếu báo không kết nối được Engine, mở Docker Desktop và đợi Engine khởi động trước khi tiếp tục.
+
+### Bước 2 — Tạo cấu hình riêng
+
+Tạo `.env` từ tệp mẫu nếu máy chưa có. Lệnh này giữ nguyên `.env` đã tồn tại:
+
+```powershell
+if (-not (Test-Path .\.env)) { Copy-Item .\.env.example .\.env }
+```
+
+Mở tệp để điền cấu hình:
 
 ```powershell
 notepad .\.env
 ```
 
-Điền API key của mình. Cấu hình hiện tại dùng:
+Nội dung mẫu:
 
 ```dotenv
 OPENROUTER_API_KEY=
@@ -109,43 +67,45 @@ OPENROUTER_MODEL=openrouter/free
 ECG_API_URL=http://127.0.0.1:8000
 ```
 
-Agent ghi lại mô hình LLM thực tế do OpenRouter trả về. Không coi tên router là tên một mô hình cố định.
+Điền API key OpenRouter của bạn sau dấu `=` ở dòng đầu, rồi lưu tệp. Key cần cho chức năng chat; API phân loại ECG vẫn có thể chạy khi chưa có key. Không đưa `.env` hoặc API key lên GitHub.
 
-Không gửi .env hoặc API key lên GitHub.
-
-### 4.3. Tạo thư mục dữ liệu và kết quả
+### Bước 3 — Tạo thư mục và đóng gói chương trình
 
 ```powershell
 New-Item -ItemType Directory -Force -Path ".\data\mitdb", ".\logs", ".\outputs"
 ```
 
-### 4.4. Build image
-
 ```powershell
 docker build -t httm-ecg .
 ```
 
-Lần đầu cần tải image nền và thư viện. Những lần build sau có thể sử dụng cache.
+Lần đầu có thể mất thời gian vì cần tải image Python và thư viện. Những lần sau Docker có thể dùng lại phần đã tải.
 
-### 4.5. Chuẩn bị bản ghi 100
+### Bước 4 — Chuẩn bị bản ghi ECG để demo
 
-Nếu đã có đủ 100.dat, 100.hea và 100.atr, đặt chúng vào data/mitdb/.
+Giao diện Agent cho chọn **21 bản ghi DS2 của MIT-BIH**. Bản 100 là ví dụ mặc định bên dưới. Danh sách cho biết bản nào đã có dữ liệu trên máy; xem [hướng dẫn DS2](DS2_DEMO_GUIDE.md) để kiểm tra đủ 21 bản.
 
-Nếu chưa có, tải bằng image vừa build:
+Nếu đã có `100.dat`, `100.hea` và `100.atr`, đặt cả ba tệp vào `data/mitdb/` và bỏ qua lệnh tải dưới đây.
+
+Nếu chưa có, tải bằng image vừa tạo:
 
 ```powershell
 docker run --rm --mount "type=bind,source=$($PWD.Path)\data,target=/app/data" httm-ecg python -c "import wfdb; wfdb.dl_database('mitdb', '/app/data/mitdb', records=['100'], annotators=['atr'], overwrite=False)"
 ```
 
-Lệnh này dùng mount ghi được để tải dữ liệu. Container API ở bước tiếp theo chỉ được đọc data/.
+Dữ liệu gốc không nằm trong ZIP GitHub. Chỉ cần bản 100 để chạy ví dụ mặc định. Muốn chọn đủ 21 bản DS2, tải chúng bằng lệnh dưới, không cần tải các bản DS1:
 
-### 4.6. Chạy API
+```powershell
+docker run --rm --mount "type=bind,source=$($PWD.Path)\data,target=/app/data" httm-ecg python -c "import wfdb; wfdb.dl_database('mitdb', '/app/data/mitdb', records='100 103 105 111 113 117 121 123 200 210 212 213 214 219 221 222 228 231 232 233 234'.split(), annotators=['atr'], overwrite=False)"
+```
+
+### Bước 5 — Khởi động dịch vụ
 
 ```powershell
 docker run -d --rm --name httm-ecg-api --env-file .\.env -p 127.0.0.1:8000:8000 --mount "type=bind,source=$($PWD.Path)\data,target=/app/data,readonly" --mount "type=bind,source=$($PWD.Path)\logs,target=/app/logs" --mount "type=bind,source=$($PWD.Path)\outputs,target=/app/outputs" httm-ecg
 ```
 
-Kiểm tra:
+Lệnh trả về một chuỗi mã container là bình thường. Kiểm tra dịch vụ:
 
 ```powershell
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/health" | ConvertTo-Json
@@ -161,67 +121,101 @@ Kết quả mong đợi:
 }
 ```
 
-### 4.7. Chạy Agent
+### Bước 6 — Mở giao diện
+
+```powershell
+Start-Process "http://127.0.0.1:8000/"
+```
+
+Bạn cũng có thể tự nhập địa chỉ trên vào trình duyệt. Máy khác sẽ không mở được dịch vụ này bằng địa chỉ `127.0.0.1` của họ; cấu hình hiện tại chạy trên máy của bạn.
+
+## 3. Sử dụng giao diện chat
+
+Kiểm tra trạng thái dịch vụ, API key và dữ liệu trên giao diện. Chọn mã bản ghi trong ô bên trái, rồi bấm gợi ý phân tích hoặc nhập câu hỏi. Nếu câu hỏi ghi mã khác, hệ thống ưu tiên mã bạn gõ; bản ngoài DS2 bị từ chối. Có thể gửi:
+
+- “Liệt kê các bản ghi được phép truy cập.”
+- “Phân loại bản đang chọn và thống kê số nhịp từng lớp.”
+- “Phân tích bản ghi 103.”
+- “Bản ghi 100 có bao nhiêu nhịp bị bỏ qua và chưa được phân loại?”
+- “Đỉnh R của bản ghi 100 được lấy từ đâu?”
+
+Agent sẽ gọi công cụ để lấy thông tin rồi trả lời. Mở **Thông tin lần chạy** để xem công cụ đã dùng và tên mô hình LLM thực tế. Với `openrouter/free`, mô hình được chọn có thể khác giữa các lượt; thời gian phản hồi cũng có thể thay đổi.
+
+Kết quả tham chiếu của bản ghi 100:
+
+| Nội dung | Giá trị |
+|---|---:|
+| Số mẫu tín hiệu | 650.000 |
+| Số đỉnh R từ chú thích có sẵn | 2.273 |
+| Số nhịp xử lý được | 2.271 |
+| Số nhịp bỏ qua do thiếu cửa sổ | 2 |
+| Nhãn dự đoán N / S / V / F / Q | 2.236 / 34 / 1 / 0 / 0 |
+| Số nhịp chưa phân loại | 0 |
+
+Đây là **số lượng nhãn mô hình dự đoán**, không phải số nhịp dự đoán đúng. `samples` đếm mẫu tín hiệu; `processed_count` và `skipped_count` đếm nhịp.
+
+Sau khi xem kết quả, chọn **Lưu báo cáo** để tạo tệp JSON hoặc **Bỏ qua lưu** để không tạo tệp. Báo cáo đã lưu nằm trong `outputs/` trên Windows và có thể tải từ giao diện. Nhật ký hoạt động nằm trong `logs/agent_audit.jsonl`.
+
+Bản xem trước chưa lưu chỉ được giữ tạm tối đa một giờ và mất khi chương trình khởi động lại. Agent không có công cụ chạy shell hoặc đọc tệp tùy ý. Công cụ gửi cho LLM metadata và thống kê tổng hợp, không gửi toàn bộ sóng ECG. Khi nhập yêu cầu chat, chỉ dùng thông tin cần thiết cho bản ghi demo.
+
+Nếu muốn chạy Agent ngay trong PowerShell thay vì dùng web:
 
 ```powershell
 docker exec -it httm-ecg-api python agent_main.py
 ```
 
-Agent liệt kê bản ghi được phép, gọi API cho bản ghi 100 và tóm tắt số liệu.
+Khi được hỏi lưu, nhập `y` để lưu hoặc `n` để bỏ.
 
-Khi được hỏi lưu:
+## 4. Tắt và mở lại
 
-- Nhập y để lưu.
-- Nhập n hoặc hủy để không lưu.
-
-Báo cáo được lưu trong outputs/ trên máy chủ. Nhật ký nằm trong logs/agent_audit.jsonl.
-
-Chỉ metadata và thống kê tổng hợp được đưa vào nội dung công cụ gửi LLM; toàn bộ ECG không được gửi.
-
-### 4.8. Dừng và chạy lại
+Dừng dịch vụ trước khi kết thúc:
 
 ```powershell
 docker stop httm-ecg-api
 ```
 
-Container dùng --rm nên sẽ bị xóa sau khi dừng. Image và các thư mục mount trên máy chủ vẫn còn.
+Sau đó có thể đóng PowerShell và Docker Desktop. Dữ liệu, nhật ký và báo cáo đã lưu trong các thư mục trên Windows vẫn còn.
 
-Muốn chạy lại, dùng lại lệnh docker run ở mục 4.6.
+Lần sau, mở Docker Desktop, mở PowerShell trong thư mục dự án và chạy lại lệnh **Bước 5**, rồi mở web. Không cần tạo lại `.env`, tải lại dữ liệu hoặc build lại nếu mã nguồn và thư viện không thay đổi.
 
-Khi sửa code, cần build lại image, dừng container cũ và tạo container mới. Build image không tự cập nhật container đang chạy.
+Khi cập nhật code, build lại image, dừng container cũ rồi chạy lại Bước 5. Việc build image không tự thay code trong container đang chạy.
 
-## 5. Giao diện API
+<details>
+<summary>Một số lỗi thường gặp</summary>
 
-### GET /health
-
-Trả trạng thái dịch vụ, chế độ và phiên bản mô hình.
-
-Model được nạp một lần khi khởi động. Nếu thiếu model hoặc cấu hình sai, API khởi động thất bại.
-
-### POST /predict
-
-| Trường | Yêu cầu |
+| Hiện tượng | Cách xử lý |
 |---|---|
-| ecg | Mảng ECG gốc, chưa lọc, chưa chuẩn hóa, đơn vị mV |
-| fs | 360 |
-| r_peaks | Mảng chỉ số nguyên, 0-based, tăng dần, không trùng |
+| Không kết nối được Docker Engine | Mở Docker Desktop, đợi Engine chạy rồi thử lại `docker version` |
+| Tên `httm-ecg-api` đã được dùng | Kiểm tra `docker ps -a`; nếu là container demo cũ đang chạy, dừng bằng `docker stop httm-ecg-api` |
+| Không mở được web | Kiểm tra `docker ps` và `/health`; xem lỗi bằng `docker logs httm-ecg-api` |
+| Chat báo chưa có API key | Kiểm tra `.env`, sau đó dừng và tạo lại container để nạp cấu hình mới |
+| Bản đang chọn chưa có dữ liệu | Kiểm tra đủ ba tệp `<mã>.dat`, `<mã>.hea`, `<mã>.atr` trong `data/mitdb/` |
+| Chat không lấy được kết quả công cụ | Xem trạng thái dịch vụ và thông tin lần chạy; lỗi có thể do API, tham số công cụ hoặc dịch vụ LLM |
 
-Cần gửi toàn bộ đỉnh R đã chọn theo TV1, kể cả nhịp biên, để RR có đúng ngữ cảnh.
+</details>
 
-Không đưa các đoạn X_waveform đã xử lý trong NPZ vào trường ecg. API sẽ lọc và cắt nhịp, nên cách đó gây xử lý hai lần.
+## 5. Kiểm tra API và kết quả tích hợp
 
-Đầu ra gồm:
+Phần này dành cho người kiểm thử hoặc tích hợp code. Người chỉ cần mở web có thể bỏ qua.
 
-- mode, model_version và class_order.
-- processed_count và skipped_count.
-- beats: vị trí R, nhãn và xác suất theo từng lớp.
-- skipped: vị trí R và lý do bỏ qua.
+### Gửi dữ liệu trực tiếp vào API
 
-Thứ tự lớp: N, S, V, F, Q.
+`GET /health` cho biết dịch vụ và phiên bản mô hình. `POST /predict` nhận:
 
-API trả HTTP 422 cho đầu vào không hợp lệ. Lỗi suy luận trả HTTP 500, không chuyển sang mock.
+| Trường | Nội dung |
+|---|---|
+| `ecg` | Mảng ECG gốc theo mV, chưa lọc, chưa Z-score |
+| `fs` | Tần số lấy mẫu, bằng 360 Hz |
+| `r_peaks` | Chỉ số đỉnh R bắt đầu từ 0, kiểu nguyên, tăng dần và không trùng |
 
-### Thử giao diện bằng tín hiệu tổng hợp
+API lọc tín hiệu, tính RR, cắt nhịp, chuẩn hóa theo cấu hình đã chốt và chạy ONNX. Kết quả gồm nhãn/xác suất từng nhịp, số nhịp đã xử lý, nhịp bị bỏ qua và lý do. Thứ tự lớp là **N, S, V, F, Q**.
+
+Gửi đủ các đỉnh R đã chọn, kể cả nhịp biên, để giữ ngữ cảnh tính RR. Không đưa `X_waveform` đã xử lý trong NPZ vào trường `ecg`, vì như vậy tín hiệu sẽ bị xử lý lại. Đầu vào sai trả HTTP 422; lỗi suy luận trả HTTP 500. Nếu không tải được mô hình, dịch vụ khởi động thất bại.
+
+<details>
+<summary>Ví dụ thử API bằng tín hiệu tổng hợp</summary>
+
+Chạy từng khối trong PowerShell khi API đang hoạt động:
 
 ```powershell
 $ecg = @(0..999 | ForEach-Object { [Math]::Sin(2 * [Math]::PI * 1.2 * $_ / 360) })
@@ -235,15 +229,13 @@ $body = @{ ecg = $ecg; fs = 360; r_peaks = @(20, 400, 700) } | ConvertTo-Json -D
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/predict" -Method Post -ContentType "application/json" -Body $body | ConvertTo-Json -Depth 10
 ```
 
-Hai lệnh tạo biến không in kết quả là bình thường.
+Hai lệnh tạo biến không in kết quả là bình thường. Ví dụ cần xử lý hai nhịp và bỏ một nhịp biên. Nhãn dự đoán trên tín hiệu tổng hợp chỉ dùng kiểm tra luồng chương trình, không dùng đánh giá độ chính xác.
 
-Ví dụ này phải xử lý 2 nhịp và bỏ 1 nhịp biên. Nhãn trên tín hiệu tổng hợp chỉ kiểm tra luồng xử lý, không dùng đánh giá độ chính xác.
+</details>
 
-## 6. Chạy bộ kiểm tra trên Windows
+### Chạy các script kiểm tra
 
-Phần này cần Python 3.14 trên máy chủ. Docker API vẫn chạy ở cổng 8000.
-
-Nếu chưa có môi trường:
+Cần Python 3.14 trên Windows và API Docker ở cổng 8000. Tạo môi trường nếu chưa có:
 
 ```powershell
 python -m venv .venv
@@ -253,223 +245,137 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-### Kiểm tra TV2
+| Script | Mục đích | Đầu vào cần thêm |
+|---|---|---|
+| `check_api_contract.py` | Kiểm tra đầu vào API và giới hạn công cụ | Không cần gói TV1/TV2 |
+| `check_tv2_model.py` | Đối chiếu ONNX với mẫu tham chiếu TV2 | `data/tv2/sample_io.npz` |
+| `check_real_ecg.py` | Đối chiếu tiền xử lý bản ghi 100 với TV1, rồi so với API | `data/tv1/ds2_data.npz` |
+| `benchmark_api.py` | Đo độ trễ API, tải tương đương một giờ và RAM container | Bản ghi 100, container `httm-ecg-api` |
 
-Cần đặt sample_io.npz của TV2 tại data/tv2/sample_io.npz:
-
-```powershell
-.\.venv\Scripts\python.exe .\check_tv2_model.py
-```
-
-### Kiểm tra dữ liệu thật và API Docker
-
-Cần đặt ds2_data.npz của TV1 tại data/tv1/ds2_data.npz:
-
-```powershell
-.\.venv\Scripts\python.exe -c "import check_real_ecg as check; check.API_URL = 'http://127.0.0.1:8000'; check.main()"
-```
-
-Script kiểm tra ECG, RR, vị trí R và nhãn tham chiếu của bản ghi 100 so với TV1, rồi đối chiếu xác suất API với model_runner.
-
-Nếu thiếu bản ghi gốc 100, script tải từ PhysioNet.
-
-### Kiểm tra giao diện và công cụ
+Chạy bộ kiểm tra đầu vào và quyền công cụ:
 
 ```powershell
 .\.venv\Scripts\python.exe .\check_api_contract.py
 ```
 
-### Benchmark
+Đối chiếu mô hình với mẫu TV2:
 
-Cần có bản ghi 100 tại data/mitdb/ và container httm-ecg-api đang chạy:
+```powershell
+.\.venv\Scripts\python.exe .\check_tv2_model.py
+```
+
+Đối chiếu bản ghi thật với API Docker:
+
+```powershell
+.\.venv\Scripts\python.exe -c "import check_real_ecg as check; check.API_URL = 'http://127.0.0.1:8000'; check.main()"
+```
+
+Đo hiệu năng API:
 
 ```powershell
 .\.venv\Scripts\python.exe .\benchmark_api.py
 ```
 
-Benchmark gồm 5 request làm nóng, 100 request ECG 10 giây và hai request toàn bộ bản ghi 100.
+Các phép kiểm tra trên không cần key OpenRouter. Các script có xuất bằng chứng sẽ lưu vào `outputs/`. Nếu tệp TV1 v2 tên `ds2.npz`, đặt một bản sao tại đường dẫn `data/tv1/ds2_data.npz` mà script đối chiếu yêu cầu; giữ nguyên bản dữ liệu nguồn.
 
-Các script lưu bằng chứng JSON vào outputs/. Không cần API key OpenRouter để chạy các phép kiểm tra và benchmark này.
-
-### Chạy API trực tiếp để phát triển
+<details>
+<summary>Chạy API trực tiếp bằng Python để phát triển</summary>
 
 ```powershell
 .\.venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8001
 ```
 
-Giữ cửa sổ server mở. check_real_ecg.py mặc định kiểm tra API máy chủ ở cổng 8001:
+Giữ cửa sổ server mở. `check_real_ecg.py` mặc định dùng cổng 8001:
 
 ```powershell
 .\.venv\Scripts\python.exe .\check_real_ecg.py
 ```
 
-Agent hiện chỉ cho phép API cổng 8000. Cổng 8001 dùng riêng để phát triển và đối chiếu, tránh nhầm với Docker.
+Agent hiện chỉ chấp nhận API cục bộ ở cổng 8000. Cổng 8001 dùng để phát triển và đối chiếu riêng.
+
+</details>
+
+## 6. Chạy lại thí nghiệm của nhóm
+
+Bản demo sử dụng mô hình đã huấn luyện. Nếu muốn tái hiện quá trình tạo dữ liệu và đánh giá, đọc [REPRODUCIBILITY.md](REPRODUCIBILITY.md), trong đó có môi trường, đầu vào và lệnh chạy chi tiết cho từng phần.
+
+| Phần việc | Code hoặc notebook |
+|---|---|
+| TV1: tiền xử lý DS1/DS2 và tính CI bootstrap | [notebooks/tv1/README.md](notebooks/tv1/README.md) |
+| TV2: huấn luyện, đánh giá DS2, phân tích sai và xuất ONNX | [train_evaluate.ipynb](notebooks/tv2/train_evaluate.ipynb) |
+| TV2: vẽ lại hình từ kết quả đã lưu | [figures_from_results.ipynb](notebooks/tv2/figures_from_results.ipynb) |
+| TV2: đánh giá thêm bản ghi 202, giữ nguyên mô hình | [evaluate_record_202.ipynb](notebooks/tv2/evaluate_record_202.ipynb) |
+| TV3: so sánh hai checkpoint trên cùng CPU | [benchmark_model_comparison.py](benchmark_model_comparison.py) |
+
+Dữ liệu WFDB, NPZ và gói TV2 đầy đủ được tải hoặc bàn giao riêng. Kho mã lưu các cấu hình, hash dữ liệu và bảng kết quả cần đối chiếu. Không cài môi trường huấn luyện TV2 chung với môi trường TV1; phiên bản thư viện của hai phần khác nhau. Docker demo chỉ phục vụ suy luận và Agent.
+
+**Cải tiến đã thực hiện là thêm nhánh RR vào CNN 1D.** Khi thay đổi pipeline hoặc mô hình, cần cập nhật đồng bộ cấu hình, chuẩn hóa và mẫu tham chiếu. Chuẩn hóa đầu vào ONNX thực hiện bên ngoài mô hình đúng một lần; không tính lại mean/std bằng DS2. Bản triển khai chọn FP32; INT8 nằm trong phần thử nghiệm lượng tử hóa.
 
 ## 7. Kết quả đã ghi nhận
 
-Cấu hình đo: Ryzen 5 5600X, 6 lõi/12 luồng, khoảng 32 GiB RAM máy chủ; Docker nhìn thấy 12 CPU logic và khoảng 15,57 GiB RAM.
+### Đánh giá mô hình trên DS2
 
-| Chỉ số | Kết quả |
-|---|---:|
-| Bản ghi thật đã đối chiếu end-to-end | 100, 2.271 nhịp xử lý |
-| Kiểm tra giao diện và giới hạn công cụ | 16/16 đạt |
-| Request benchmark thành công | 100/100 |
-| Median, request ECG 10 giây | 5,123 ms |
-| P95, request ECG 10 giây | 5,644 ms |
-| Hai lượt bản ghi 100, tương đương 60,19 phút | 0,708 giây |
-| RAM peak container từ khi tạo, tại thời điểm đo | 312,87 MiB |
-| Tệp ONNX | 82.719 byte |
-| Docker image đã đo trước khi thêm web | 956.832.376 byte |
+DS1 gồm **51.003 nhịp/22 bản ghi**; DS2 chính gồm **47.557 nhịp/21 bản ghi**. Bản ghi 202 bị loại khỏi DS2 chính vì cùng người với bản ghi 201 trong DS1. Phép đánh giá thêm 202 được giữ riêng.
 
-Các số API/RAM/image ở bảng trên thuộc phép đo ngày 09/10, trước khi thêm web; không phải phép đo lại trên bản hiện tại. Chi tiết phương pháp và giới hạn nằm trong PERFORMANCE_RESULTS.md.
+| Chỉ số trên DS2 | CNN cơ sở | CNN + RR |
+|---|---:|---:|
+| F1 macro, trung bình ± SD ba seed | 31,10 ± 6,00% | 48,75 ± 0,52% |
+| Accuracy, trung bình ± SD ba seed | 50,74 ± 14,48% | 83,37 ± 2,23% |
 
-Tải tương đương một giờ là hai lượt của cùng bản ghi, không phải một bản ghi một giờ độc lập. RAM peak bao gồm vòng đời container, không phải RAM riêng của model.
+Riêng CNN + RR seed 42 đang triển khai có F1 macro **48,86%** và accuracy **85,55%**. Đây là kết quả một seed, khác với trung bình ba seed ở bảng trên.
 
-## 8. Quy ước tích hợp cho TV1 và TV2
+Nhánh RR giúp tăng F1 macro trung bình, nhưng độ nhạy lớp S trung bình giảm; cần xem đầy đủ các chỉ số trong [reports/tv2/](reports/tv2/) trước khi nhận xét mô hình tốt hơn ở mọi mặt.
 
-### TV1
+### Kiểm thử và hiệu năng
 
-Giữ đồng bộ code tiền xử lý và dữ liệu đã xuất:
-
-- Butterworth 0,5–40 Hz, order=2, filtfilt.
-- Cửa sổ signal[R-90:R+144], 234 mẫu.
-- ECG [N, 1, 234], chưa chuẩn hóa.
-- RR [N, 3], đơn vị giây.
-- Thứ tự RR_pre, RR_post, RR_local_avg.
-- Tính RR trước khi bỏ nhịp biên.
-- Chọn chú thích theo ánh xạ AAMI.
-- Giữ đúng cách chia DS1/DS2 và loại bản ghi theo phân công.
-
-Nếu thay đổi cách chọn nhịp, lọc hoặc RR, cần báo TV2 và TV3, xuất lại dữ liệu và kiểm tra lại tính nhất quán.
-
-### TV2
-
-Bộ triển khai hiện tại gồm:
-
-- exports/cnn_rr_fp32.onnx.
-- inference_config.json.
-- normalization.json.
-- preprocess_config.json.
-
-ONNX phải nhận ecg [N, 1, 234] và rr [N, 3], float32; trả probabilities [N, 5] theo thứ tự N, S, V, F, Q.
-
-Chuẩn hóa ngoài ONNX đúng một lần. Không tự tính lại mean/std bằng DS2.
-
-Khi đổi model, bàn giao kèm cấu hình, phiên bản, thông số chuẩn hóa và sample_io tham chiếu. Không chỉ thay tệp ONNX rồi giữ cấu hình cũ.
-
-Model INT8 trong bundle TV2 là bản thử nghiệm, chưa được chọn để triển khai ở repository này.
-
-### Bàn giao báo cáo
-
-Đã nhận hồ sơ dữ liệu, huấn luyện/đánh giá, CI và phân tích sai số của TV1/TV2. Notebook và cấu hình nằm trong notebooks/; các bảng kết quả nhỏ trong reports/. Gói TV2 đầy đủ, dữ liệu NPZ và ảnh minh họa gửi riêng. Xem REPRODUCIBILITY.md để chuẩn bị đầu vào chạy lại.
-
-TV3 đã có code tích hợp, sơ đồ, bảng yêu cầu và kết quả kiểm thử. Các bằng chứng JSON và audit cần gửi riêng khi tổng hợp báo cáo vì không được commit mặc định.
-
-## 9. Giới hạn cần nêu trong báo cáo
-
-- Chưa có bộ phát hiện R; cần vị trí R được cung cấp.
-- filtfilt và RR_post dùng thông tin sau nhịp, phục vụ xem lại bản ghi.
-- Agent chỉ cho phép bản ghi 100 và API cục bộ ở cổng 8000.
-- Đối chiếu dữ liệu thật end-to-end mới thực hiện trên bản ghi 100.
-- Chưa đối chiếu toàn bộ DS2 qua API.
-- Chưa đo nhiều client đồng thời, mạng ngoài localhost hoặc chạy dài hạn.
-- Benchmark API không bao gồm thời gian gọi OpenRouter.
-- Docker suy luận không thay thế môi trường huấn luyện của TV2.
-- Nhãn dự đoán và bản tóm tắt Agent không phải chẩn đoán hoặc đề xuất điều trị.
-
-## Giao diện chat trên trình duyệt
-
-Dự án có giao diện web tại http://127.0.0.1:8000/ khi container API đang chạy.
-
-### Khởi động
-
-Chạy các lệnh PowerShell trong thư mục dự án. Docker Desktop phải đang chạy.
-
-Chuẩn bị file `.env` từ `.env.example` nếu máy chưa có:
-
-```powershell
-Copy-Item .\.env.example .\.env
-```
-
-Điền API key OpenRouter trong `.env`. Không đưa file `.env` hoặc API key lên GitHub.
-
-Máy cần có các thư mục `data`, `logs`, `outputs` và dữ liệu bản ghi 100:
-
-- `data/mitdb/100.dat`
-- `data/mitdb/100.hea`
-- `data/mitdb/100.atr`
-
-Dữ liệu và cấu hình riêng không nằm trong bản tải GitHub. Chuẩn bị dữ liệu theo hướng dẫn tải bản ghi ở phần trên.
-
-Build image:
-
-```powershell
-docker build -t httm-ecg .
-```
-
-Nếu container `httm-ecg-api` đang chạy, dừng trước khi chạy bản mới:
-
-```powershell
-docker stop httm-ecg-api
-```
-
-Chạy container:
-
-```powershell
-docker run -d --rm --name httm-ecg-api --env-file .\.env -p 127.0.0.1:8000:8000 --mount "type=bind,source=$($PWD.Path)\data,target=/app/data,readonly" --mount "type=bind,source=$($PWD.Path)\logs,target=/app/logs" --mount "type=bind,source=$($PWD.Path)\outputs,target=/app/outputs" httm-ecg
-```
-
-Mở giao diện:
-
-```powershell
-Start-Process "http://127.0.0.1:8000/"
-```
-
-### Sử dụng
-
-1. Kiểm tra trạng thái API, API key và dữ liệu bản ghi 100 trên giao diện.
-2. Nhập yêu cầu, ví dụ: “Phân loại bản ghi 100 và tóm tắt số nhịp từng lớp.”
-3. Đợi Agent gọi công cụ và hiển thị kết quả.
-4. Mở “Thông tin lần chạy” để xem công cụ và mô hình LLM thực tế.
-5. Chọn “Lưu báo cáo” hoặc “Bỏ qua lưu” cho từng kết quả.
-
-Báo cáo được lưu vào thư mục `outputs` trên máy nhờ bind mount. Sau khi lưu, có thể tải bản JSON từ giao diện. Nếu bỏ qua, chương trình không tạo tệp báo cáo cho lượt đó.
-
-Bản xem trước được giữ tạm trong bộ nhớ tối đa một giờ và mất khi container khởi động lại. Các báo cáo đã lưu trong thư mục được mount vẫn còn.
-
-### Phạm vi và giới hạn
-
-- Chỉ bản ghi 100 được phép truy cập qua công cụ Agent.
-- Đỉnh R lấy từ chú thích MIT-BIH có sẵn; hệ thống không tự phát hiện đỉnh R.
-- `samples` đếm mẫu tín hiệu; `processed_count`, `skipped_count` và `unclassified_count` đếm nhịp.
-- Mô hình ECG ONNX thực hiện phân loại. LLM điều phối công cụ và tạo bản tóm tắt.
-- API key được dùng ở backend, không gửi xuống giao diện.
-- LLM không có công cụ chạy shell, đọc tệp tùy ý hoặc lưu báo cáo.
-- Chương trình chỉ lưu báo cáo khi người dùng chọn nút lưu.
-- Lời tóm tắt của LLM vẫn cần được đối chiếu với số liệu API.
-- `openrouter/free` có thể chọn mô hình khác nhau giữa các lượt; chất lượng gọi công cụ và thời gian trả lời có thể thay đổi.
-- Thời gian hiển thị trên web gồm cả gọi LLM và công cụ, khác với độ trễ `/predict` trong benchmark.
-- Kết quả phục vụ nghiên cứu và thử nghiệm, không dùng làm chẩn đoán.
-
-### Các tệp bổ sung
-
-| Tệp | Vai trò |
+| Phép kiểm tra | Kết quả đã ghi nhận |
 |---|---|
-| `web/index.html` | Giao diện chat, trạng thái dịch vụ và nút lưu/bỏ báo cáo |
-| `web_agent.py` | Các endpoint `/agent/config`, `/agent/chat`, `/agent/report`; điều phối LLM, công cụ và xác nhận lưu |
-| `main.py` | Cung cấp trang web tại `/`, tích hợp router Agent và giữ API ECG |
-| `Dockerfile` | Đóng gói giao diện, backend và mô hình trong cùng image |
+| API và giới hạn công cụ, bản triển khai trước khi mở rộng danh sách | 16/16 kiểm tra đạt |
+| Bản ghi 100 qua toàn bộ luồng API | 2.271 nhịp xử lý, khớp kết quả đối chiếu |
+| Tiền xử lý TV1 trên PC ngày 22/10 | Đủ 43 bản ghi; số nhịp, metadata và 66 dòng CI đã đối chiếu |
+| So sánh CNN/CNN + RR trên cùng CPU | Đã đo, bằng chứng tại `reports/cpu/` |
+| 100 request API | 100/100 thành công; median 5,123 ms, P95 5,644 ms |
+| Hai lượt bản ghi 100, tương đương 60,19 phút ECG | Tổng thời gian 0,708 giây |
+| RAM peak container từ khi tạo | 312,87 MiB |
+| Kích thước ONNX FP32 | 82.719 byte |
 
-Giao diện web và Agent dòng lệnh `agent_main.py` đều có thể sử dụng.
+Số liệu benchmark API/RAM thuộc phép đo ngày **09/10/2026, trước khi thêm web**, trên desktop Ryzen 5 5600X. Chưa đo lại benchmark API trên bản có web. Thời gian trả lời chat còn bao gồm gọi OpenRouter nên không so trực tiếp với số mili giây của API.
 
-## 10. Kết quả mô hình và cập nhật ngày 22/10/2026
+Tải tương đương một giờ là hai lượt của cùng bản ghi, không phải một bản ghi một giờ độc lập. RAM peak tính cả vòng đời container. Xem [PERFORMANCE_RESULTS.md](PERFORMANCE_RESULTS.md) để biết cách đo và giới hạn từng kết quả.
 
-Cải tiến đã thực hiện là thêm nhánh RR vào CNN 1D. Attention/focal loss không phải mô hình được triển khai.
+Đã đối chiếu đủ **21/21 bản DS2 trên API Docker ở laptop**, tổng **47.557 nhịp**. Số nhịp và số lượng nhãn N/S/V/F/Q từng bản khớp bảng TV2. Bằng chứng: [ds2_records_check_b9a4a1c058d04fdeaef6dfedf6c8ee6e.json](reports/deployment/ds2_records_check_b9a4a1c058d04fdeaef6dfedf6c8ee6e.json). Phép kiểm tra này không so xác suất từng nhịp.
 
-- DS1: 51.003 nhịp/22 bản ghi; DS2 chính: 47.557 nhịp/21 bản ghi, không có 202.
-- F1 macro DS2, trung bình ± SD ba seed: CNN cơ sở 31,10 ± 6,00%; CNN + RR 48,75 ± 0,52%.
-- CNN + RR seed 42 triển khai: F1 macro 48,86%; accuracy 85,55%. Không thay bằng trung bình ba seed.
-- Nhánh RR cải thiện F1 macro trung bình; Se lớp S trung bình giảm. Xem đủ chỉ số trong reports/tv2/.
-- 201 và 202 thuộc cùng người; kết quả có 202 chỉ là đánh giá bổ sung, không thay kết quả test độc lập chính.
-- Bootstrap CI: sáu cặp mô hình–seed × 11 chỉ số = 66 dòng, cố định năm lớp; lấy mẫu 1.000 lượt theo bản ghi. Hồ sơ PC: notebooks/tv1/verification/pc_run_20261022/.
-- Kiểm tra lại đầy đủ trên môi trường mới vẫn chưa được xác nhận. Không dùng việc kho Git sạch làm bằng chứng đã chạy sạch từ đầu.
+### Phạm vi hiện tại
+
+- Agent hỗ trợ 21 bản DS2 trong danh sách được phép; DS1 và bản 202 nằm ngoài demo. API `/predict` nhận mảng ECG theo quy ước ở mục 5.
+- Đỉnh R lấy từ chú thích có sẵn hoặc do bên gọi cung cấp; hệ thống chưa có bộ phát hiện R tự động.
+- Lọc `filtfilt` và đặc trưng `RR_post` cần thông tin sau nhịp, phù hợp xem lại ECG đã thu nhận.
+- Đã đối chiếu số nhịp và số lượng nhãn từng lớp qua API cho toàn bộ 21 bản DS2; chưa đối chiếu xác suất từng nhịp qua HTTP.
+- Chưa đo nhiều người dùng đồng thời, mạng ngoài localhost hoặc hoạt động dài hạn. Cấu hình cục bộ này chưa có xác thực người dùng cho triển khai công khai.
+- Nội dung LLM tóm tắt cần được đối chiếu với số liệu công cụ; kết quả không thay thế đánh giá y khoa.
+
+## 8. Tìm code và tài liệu ở đâu?
+
+| Tệp hoặc thư mục | Nội dung |
+|---|---|
+| `main.py` | Dịch vụ FastAPI và trang web |
+| `preprocessing.py` | Lọc tín hiệu, tính RR và cắt nhịp |
+| `model_runner.py` | Chuẩn hóa và chạy ONNX |
+| `agent_tools.py` | Công cụ đọc bản ghi và gọi API |
+| `agent_main.py` | Agent chạy từ dòng lệnh |
+| `web_agent.py`, `web/` | Backend và giao diện chat |
+| `models/tv2/` | ONNX FP32 và cấu hình triển khai |
+| `notebooks/tv1/`, `notebooks/tv2/` | Code tiền xử lý, huấn luyện và đánh giá |
+| `reports/` | Các bảng kết quả và bằng chứng nhỏ lưu cùng kho mã |
+| `data/`, `logs/`, `outputs/` | Dữ liệu, nhật ký và báo cáo trên máy người chạy; được loại khỏi Git |
+| `Dockerfile`, `requirements.txt` | Môi trường chạy dịch vụ |
+| `.env.example` | Mẫu cấu hình, không có key thật |
+
+Tài liệu chi tiết:
+
+- [Thiết kế hệ thống](SYSTEM_DESIGN.md): kiến trúc và luồng xử lý.
+- [Yêu cầu kỹ thuật](TECHNICAL_REQUIREMENTS.md): quy ước dữ liệu và mục tiêu kiểm tra. Bảng trạng thái ban đầu được giữ theo thời điểm lập; phần cập nhật nằm cuối tài liệu.
+- [Kết quả kiểm thử và hiệu năng](PERFORMANCE_RESULTS.md): số liệu, cấu hình máy và cách đo.
+- [Hướng dẫn chạy lại](REPRODUCIBILITY.md): chuẩn bị dữ liệu và tái hiện từng phần thí nghiệm.
+- [Chọn và kiểm tra 21 bản DS2](DS2_DEMO_GUIDE.md): cách dùng bản ghi, đối chiếu và cập nhật container.
+- [Nguồn các bảng kết quả](reports/README.md): xuất xứ và đơn vị của bằng chứng đã lưu.

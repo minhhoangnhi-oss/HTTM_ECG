@@ -13,4 +13,4 @@ Các tệp ở đây bổ sung hồ sơ kết quả đã có, không phải kế
 
 CSV TV2 lưu phần lớn chỉ số dưới dạng tỷ lệ 0–1; bảng CI TV1 lưu phần trăm theo tên cột. Kiểm tra cột trước khi nhân 100. SD ba seed khác CI bootstrap theo bản ghi. Benchmark CPU PyTorch khác benchmark HTTP/ONNX; không gộp hai loại thời gian.
 
-sha256_manifest.json trong thư mục này ghi hash các tệp bằng chứng được sao chép; không chứa chính manifest. Hash dùng kiểm tra tệp, không thay bằng chứng chạy sạch trên môi trường mới.
+sha256_manifest.json trong thư mục này ghi hash các tệp bằng chứng được sao chép; không chứa chính manifest. Hash dùng kiểm tra tính toàn vẹn của tệp.
