@@ -87,23 +87,44 @@ def record_metadata():
     }
 
 
+
+class ToolArgumentError(ValueError):
+    """A rejected tool name, argument structure or record identifier."""
+
+
+def normalize_record_id(value):
+    # Permit a harmless JSON integer/string difference, never fuzzy IDs.
+    if type(value) is int:
+        value = str(value)
+    elif isinstance(value, str):
+        value = value.strip()
+    else:
+        raise ToolArgumentError(
+            'record_id phải là mã bản ghi dạng chuỗi hoặc số nguyên.'
+        )
+    if value != RECORD_ID:
+        raise ToolArgumentError(
+            f'Bản ghi không được phép truy cập. Chỉ có bản ghi {RECORD_ID}.'
+        )
+    return value
+
+
 def execute_tool(name, arguments):
     if not isinstance(arguments, dict):
-        raise ValueError("Tham số công cụ phải là một đối tượng.")
+        raise ToolArgumentError("Tham số công cụ phải là một đối tượng.")
 
     if name == "list_records":
         if arguments:
-            raise ValueError("Công cụ này không nhận tham số.")
+            raise ToolArgumentError("Công cụ này không nhận tham số.")
         return {"records": [record_metadata()]}
 
     if name != "classify_record":
-        raise ValueError("Công cụ ngoài danh sách cho phép.")
+        raise ToolArgumentError("Công cụ ngoài danh sách cho phép.")
 
     if set(arguments) != {"record_id"}:
-        raise ValueError("Tham số không đúng cấu trúc.")
+        raise ToolArgumentError("Tham số không đúng cấu trúc; chỉ nhận record_id.")
 
-    if arguments["record_id"] != RECORD_ID:
-        raise ValueError("Bản ghi không được phép truy cập.")
+    normalize_record_id(arguments["record_id"])
 
     api_url = os.getenv(
         "ECG_API_URL", "http://127.0.0.1:8000"

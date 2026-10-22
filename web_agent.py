@@ -1,6 +1,7 @@
 import hmac
 import json
 import os
+import re
 import secrets
 import threading
 import time
@@ -14,7 +15,10 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
-from agent_tools import RECORD_ID, RECORD_PATH, TOOL_SCHEMAS, execute_tool
+from agent_tools import (
+    RECORD_ID, RECORD_PATH, TOOL_SCHEMAS, ToolArgumentError, execute_tool,
+    normalize_record_id,
+)
 
 ROOT = Path(__file__).resolve().parent
 router = APIRouter(prefix="/agent", tags=["Web Agent"])
@@ -30,6 +34,10 @@ Khi người dùng yêu cầu phân loại hoặc số lượng từng lớp,
 phải gọi classify_record cho bản ghi được phép.
 Chỉ tổng hợp metadata và số liệu công cụ vừa trả về.
 Lịch sử trò chuyện chỉ dùng để hiểu yêu cầu, không thay thế dữ liệu công cụ.
+Ưu tiên mã bản ghi trong yêu cầu hiện tại, không lấy mã từ lượt trước.
+Khi gọi classify_record, chỉ truyền một trường record_id, dạng chuỗi.
+Nếu công cụ báo lỗi tham số có thể sửa, sửa đúng tham số rồi thử lại;
+không đổi bản ghi ngoài quyền thành bản ghi 100 để làm thay yêu cầu.
 samples là số mẫu tín hiệu ECG.
 r_peak_count là số đỉnh R lấy từ chú thích có sẵn.
 Không nói hệ thống tự phát hiện đỉnh R.
@@ -140,6 +148,14 @@ def run_conversation(data, run_id, key, model):
     tool_events = []
     tool_count = 0
     successful_tools = 0
+    repair_attempts = 0
+    argument_error = False
+    force_classify = False
+    requested_records = set(re.findall(
+        r"(?:bản\s*ghi|record(?:_id)?)\s*(?:là\s*)?[:=]?\s*[\"'`]*([0-9]+)\b",
+        data.message,
+        flags=re.IGNORECASE,
+    ))
 
     with httpx.Client(timeout=60.0, trust_env=False) as client:
         for _ in range(6):
@@ -150,7 +166,11 @@ def run_conversation(data, run_id, key, model):
                     "model": model,
                     "messages": messages,
                     "tools": TOOL_SCHEMAS,
-                    "tool_choice": "required" if successful_tools == 0 else "auto",
+                    "tool_choice": (
+                        {"type": "function", "function": {"name": "classify_record"}}
+                        if force_classify
+                        else ("required" if successful_tools == 0 else "auto")
+                    ),
                     "max_tokens": 2048,
                 },
             )
@@ -242,6 +262,32 @@ def run_conversation(data, run_id, key, model):
                     })
                     continue
 
+                if (
+                    last_result is None
+                    and argument_error
+                    and requested_records == {RECORD_ID}
+                    and repair_attempts < 1
+                ):
+                    repair_attempts += 1
+                    force_classify = True
+                    messages.append({
+                        "role": "system",
+                        "content": (
+                            "Lần gọi phân loại bị lỗi tham số. Yêu cầu hiện tại "
+                            "chỉ định bản ghi 100. Hãy gọi classify_record với "
+                            '{"record_id":"100"}; không thêm trường khác. '
+                            "Chỉ tóm tắt sau khi nhận kết quả hoặc lỗi công cụ."
+                        ),
+                    })
+                    audit(run_id, "argument_retry", tool="classify_record")
+                    continue
+
+                if last_result is None and argument_error and force_classify:
+                    raise AgentError(
+                        "Agent chưa gửi được tham số phân loại hợp lệ sau "
+                        "một lần thử sửa. Chưa có kết quả dự đoán."
+                    )
+
                 return last_result, summary.strip(), models_used, tool_events
 
             tool_count += len(calls)
@@ -264,11 +310,34 @@ def run_conversation(data, run_id, key, model):
 
                 try:
                     arguments = json.loads(call["function"]["arguments"])
+                    if name == "classify_record":
+                        raw_id = arguments.get("record_id") if isinstance(arguments, dict) else None
+                        audit(
+                            run_id,
+                            "tool_arguments",
+                            tool=name,
+                            record_id=(
+                                str(raw_id).strip()[:16]
+                                if type(raw_id) in (str, int)
+                                and str(raw_id).strip().isascii()
+                                and str(raw_id).strip().isdigit()
+                                else "invalid"
+                            ),
+                            record_id_type=type(raw_id).__name__,
+                        )
+                        normalized = normalize_record_id(raw_id)
+                        if requested_records and requested_records != {normalized}:
+                            raise ToolArgumentError(
+                                "Mã bản ghi công cụ không khớp yêu cầu hiện tại. "
+                                "Không phân loại bản ghi khác thay thế."
+                            )
                     result = execute_tool(name, arguments)
                     successful_tools += 1
 
                     if name == "classify_record":
                         last_result = result
+                        argument_error = False
+                        force_classify = False
 
                     tool_events.append({
                         "tool": name,
@@ -292,8 +361,16 @@ def run_conversation(data, run_id, key, model):
                     if name == "classify_record":
                         last_result = None
 
+                    argument_error = name == "classify_record" and isinstance(error, ToolArgumentError)
+                    if isinstance(error, ToolArgumentError):
+                        error_text = str(error)
+                    elif isinstance(error, httpx.HTTPError):
+                        error_text = "Không gọi được API phân loại ECG. Chưa có kết quả dự đoán."
+                    else:
+                        error_text = "Không xử lý được dữ liệu hoặc kết quả công cụ. Chưa có kết quả dự đoán."
                     result = {
-                        "error": "Công cụ bị từ chối hoặc API gặp lỗi."
+                        "error": error_text,
+                        "retryable_argument_error": argument_error,
                     }
                     tool_events.append({
                         "tool": name,
