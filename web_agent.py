@@ -16,7 +16,8 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
 from agent_tools import (
-    RECORD_ID, RECORD_PATH, TOOL_SCHEMAS, ToolArgumentError, execute_tool,
+    RECORD_ID, ALLOWED_RECORD_IDS, TOOL_SCHEMAS, ToolArgumentError, execute_tool,
+    record_catalog,
     normalize_record_id,
 )
 
@@ -37,7 +38,11 @@ Lịch sử trò chuyện chỉ dùng để hiểu yêu cầu, không thay thế
 Ưu tiên mã bản ghi trong yêu cầu hiện tại, không lấy mã từ lượt trước.
 Khi gọi classify_record, chỉ truyền một trường record_id, dạng chuỗi.
 Nếu công cụ báo lỗi tham số có thể sửa, sửa đúng tham số rồi thử lại;
-không đổi bản ghi ngoài quyền thành bản ghi 100 để làm thay yêu cầu.
+không đổi bản ghi ngoài quyền thành bản ghi khác để làm thay yêu cầu.
+Chỉ hỗ trợ 21 bản ghi DS2 trong danh sách công cụ. DS1 và 202 ngoài phạm vi demo.
+Nếu người dùng nêu mã trong câu hỏi, ưu tiên mã đó. Nếu không nêu mã,
+dùng bản ghi đã chọn trên giao diện. Mỗi lượt chỉ phân loại một bản ghi.
+Không gọi classify_record cho bản ghi có ready=false; hướng dẫn tải tệp còn thiếu.
 samples là số mẫu tín hiệu ECG.
 r_peak_count là số đỉnh R lấy từ chú thích có sẵn.
 Không nói hệ thống tự phát hiện đỉnh R.
@@ -68,6 +73,7 @@ class HistoryMessage(InputModel):
 
 
 class ChatInput(InputModel):
+    selected_record_id: str | None = Field(default=None, max_length=3, pattern=r"^[0-9]{3}$")
     message: str = Field(min_length=1, max_length=1500)
     history: list[HistoryMessage] = Field(
         default_factory=list,
@@ -143,6 +149,18 @@ def run_conversation(data, run_id, key, model):
         {"role": "user", "content": data.message.strip()},
     ]
 
+    if data.selected_record_id is not None:
+        selected_id = normalize_record_id(data.selected_record_id)
+        messages.append({
+            "role": "system",
+            "content": (
+                f"Bản ghi đang chọn trên giao diện là {selected_id}, thuộc DS2. "
+                "Dùng mã này khi câu hỏi hiện tại không nêu mã bản ghi. "
+                "Nếu câu hỏi nêu mã khác, chỉ xét mã trong câu hỏi; "
+                "không tự thay bản ghi ngoài quyền bằng bản đang chọn."
+            ),
+        })
+
     last_result = None
     models_used = []
     tool_events = []
@@ -156,6 +174,9 @@ def run_conversation(data, run_id, key, model):
         data.message,
         flags=re.IGNORECASE,
     ))
+
+    if not requested_records and data.selected_record_id is not None:
+        requested_records = {data.selected_record_id}
 
     with httpx.Client(timeout=60.0, trust_env=False) as client:
         for _ in range(6):
@@ -265,17 +286,20 @@ def run_conversation(data, run_id, key, model):
                 if (
                     last_result is None
                     and argument_error
-                    and requested_records == {RECORD_ID}
+                    and len(requested_records) == 1
+                    and requested_records.issubset(ALLOWED_RECORD_IDS)
                     and repair_attempts < 1
                 ):
                     repair_attempts += 1
+                    requested_id = next(iter(requested_records))
                     force_classify = True
                     messages.append({
                         "role": "system",
                         "content": (
                             "Lần gọi phân loại bị lỗi tham số. Yêu cầu hiện tại "
-                            "chỉ định bản ghi 100. Hãy gọi classify_record với "
-                            '{"record_id":"100"}; không thêm trường khác. '
+                            f"chỉ định bản ghi {requested_id}. Hãy gọi classify_record với "
+                            + json.dumps({"record_id": requested_id})
+                            + "; không thêm trường khác. "
                             "Chỉ tóm tắt sau khi nhận kết quả hoặc lỗi công cụ."
                         ),
                     })
@@ -395,18 +419,15 @@ def run_conversation(data, run_id, key, model):
 
 @router.get("/config")
 def config():
+    records = record_catalog()
     return {
-        "key_configured": bool(
-            os.getenv("OPENROUTER_API_KEY", "").strip()
-        ),
-        "requested_model": os.getenv(
-            "OPENROUTER_MODEL", "openrouter/free"
-        ),
-        "allowed_records": [RECORD_ID],
-        "record_ready": all(
-            RECORD_PATH.with_suffix(f".{extension}").is_file()
-            for extension in ["dat", "hea", "atr"]
-        ),
+        "key_configured": bool(os.getenv("OPENROUTER_API_KEY", "").strip()),
+        "requested_model": os.getenv("OPENROUTER_MODEL", "openrouter/free"),
+        "allowed_records": list(ALLOWED_RECORD_IDS),
+        "records": records,
+        "ready_count": sum(entry["ready"] for entry in records),
+        "record_ready": any(entry["ready"] for entry in records),
+        "dataset_split": "DS2",
     }
 
 
@@ -422,6 +443,12 @@ def chat(data: ChatInput, request: Request):
             status_code=422,
             detail="Lịch sử quá dài. Hãy bắt đầu cuộc trò chuyện mới.",
         )
+
+    if data.selected_record_id is not None:
+        try:
+            normalize_record_id(data.selected_record_id)
+        except ToolArgumentError as error:
+            raise HTTPException(status_code=422, detail=str(error)) from error
 
     key = os.getenv("OPENROUTER_API_KEY", "").strip()
     model = os.getenv("OPENROUTER_MODEL", "openrouter/free")
@@ -457,6 +484,7 @@ def chat(data: ChatInput, request: Request):
                 "source": "web",
                 "confirmed": False,
                 "user_request": data.message.strip(),
+                "selected_record_id": data.selected_record_id,
                 "requested_llm_model": model,
                 "actual_llm_models": models_used,
                 "api_result": result,

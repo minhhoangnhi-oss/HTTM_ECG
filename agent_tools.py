@@ -16,6 +16,11 @@ load_dotenv(
 
 CLASSES = ["N", "S", "V", "F", "Q"]
 RECORD_ID = "100"
+ALLOWED_RECORD_IDS = (
+    "100", "103", "105", "111", "113", "117", "121", "123",
+    "200", "210", "212", "213", "214", "219", "221", "222",
+    "228", "231", "232", "233", "234",
+)
 RECORD_PATH = ROOT / "data" / "mitdb" / RECORD_ID
 SOURCE = "physionet_mit_bih"
 
@@ -54,20 +59,47 @@ TOOL_SCHEMAS = [
         {
             "record_id": {
                 "type": "string",
-                "enum": [RECORD_ID],
+                "enum": list(ALLOWED_RECORD_IDS),
             },
         },
     ),
 ]
 
 
-def record_metadata():
+def record_path(record_id):
+    return ROOT / "data" / "mitdb" / normalize_record_id(record_id)
+
+
+def record_available(record_id):
+    path = record_path(record_id)
+    return all(path.with_suffix(f".{ext}").is_file() for ext in ("dat", "hea", "atr"))
+
+
+def record_catalog(include_metadata=False):
+    records = []
+    for record_id in ALLOWED_RECORD_IDS:
+        ready = record_available(record_id)
+        entry = {"record_id": record_id, "dataset_split": "DS2", "ready": ready}
+        if include_metadata and ready:
+            try:
+                entry.update(record_metadata(record_id))
+            except (ValueError, OSError):
+                entry.update(ready=False, reason="Không đọc được cấu hình bản ghi ECG.")
+        if not ready:
+            entry["reason"] = "Thiếu tệp .dat, .hea hoặc .atr trên máy."
+        records.append(entry)
+    return records
+
+
+def record_metadata(record_id=RECORD_ID):
+    selected_id = normalize_record_id(record_id)
+    selected_path = record_path(selected_id)
     for extension in ["dat", "hea", "atr"]:
-        path = RECORD_PATH.with_suffix(f".{extension}")
+        path = selected_path.with_suffix(f".{extension}")
         if not path.is_file():
             raise ValueError("Thiếu tệp bản ghi ECG được phép.")
 
-    header = wfdb.rdheader(str(RECORD_PATH))
+    header = wfdb.rdheader(str(selected_path))
     channel = header.sig_name.index("MLII") if "MLII" in header.sig_name else 0
 
     if header.fs != 360:
@@ -76,7 +108,8 @@ def record_metadata():
         raise ValueError("Biên độ ECG phải có đơn vị mV.")
 
     return {
-        "record_id": RECORD_ID,
+        "record_id": selected_id,
+        "dataset_split": "DS2",
         "source": SOURCE,
         "fs": 360,
         "samples": int(header.sig_len),
@@ -102,9 +135,10 @@ def normalize_record_id(value):
         raise ToolArgumentError(
             'record_id phải là mã bản ghi dạng chuỗi hoặc số nguyên.'
         )
-    if value != RECORD_ID:
+    if value not in ALLOWED_RECORD_IDS:
         raise ToolArgumentError(
-            f'Bản ghi không được phép truy cập. Chỉ có bản ghi {RECORD_ID}.'
+            'Bản ghi không được phép truy cập. Chỉ hỗ trợ 21 bản ghi DS2; '
+            'hãy dùng list_records để xem danh sách.'
         )
     return value
 
@@ -116,7 +150,7 @@ def execute_tool(name, arguments):
     if name == "list_records":
         if arguments:
             raise ToolArgumentError("Công cụ này không nhận tham số.")
-        return {"records": [record_metadata()]}
+        return {"records": record_catalog(include_metadata=True)}
 
     if name != "classify_record":
         raise ToolArgumentError("Công cụ ngoài danh sách cho phép.")
@@ -124,7 +158,7 @@ def execute_tool(name, arguments):
     if set(arguments) != {"record_id"}:
         raise ToolArgumentError("Tham số không đúng cấu trúc; chỉ nhận record_id.")
 
-    normalize_record_id(arguments["record_id"])
+    selected_id = normalize_record_id(arguments["record_id"])
 
     api_url = os.getenv(
         "ECG_API_URL", "http://127.0.0.1:8000"
@@ -136,9 +170,10 @@ def execute_tool(name, arguments):
     }:
         raise ValueError("Địa chỉ API ngoài danh sách cho phép.")
 
-    metadata = record_metadata()
-    record = wfdb.rdrecord(str(RECORD_PATH))
-    annotation = wfdb.rdann(str(RECORD_PATH), "atr")
+    metadata = record_metadata(selected_id)
+    selected_path = record_path(selected_id)
+    record = wfdb.rdrecord(str(selected_path))
+    annotation = wfdb.rdann(str(selected_path), "atr")
 
     channel = record.sig_name.index(metadata["channel"])
     signal = record.p_signal[:, channel]

@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import uuid
@@ -6,7 +7,7 @@ from pathlib import Path
 
 import httpx
 
-from agent_tools import TOOL_SCHEMAS, execute_tool
+from agent_tools import ALLOWED_RECORD_IDS, TOOL_SCHEMAS, execute_tool
 
 ROOT = Path(__file__).resolve().parent
 RUN_ID = uuid.uuid4().hex
@@ -16,7 +17,7 @@ MODEL = os.getenv("OPENROUTER_MODEL", "openrouter/free")
 SYSTEM_PROMPT = """
 Bạn là trợ lý điều phối dịch vụ ECG.
 Trước tiên dùng list_records để xem bản ghi được phép.
-Sau đó dùng classify_record cho bản ghi 100 có trong danh sách.
+Sau đó dùng classify_record cho đúng bản ghi người dùng yêu cầu, nếu có trong danh sách và ready=true.
 Chỉ tổng hợp thông tin do công cụ trả về.
 Không tự tạo nhãn, xác suất hoặc số liệu.
 Nêu rõ nguồn dữ liệu, record_id, mode và phiên bản mô hình.
@@ -83,12 +84,12 @@ def call_model(client, messages):
     return message, actual_model
 
 
-def run_agent():
+def run_agent(record_id="100"):
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {
             "role": "user",
-            "content": "Xem bản ghi được phép và xử lý bản ghi 100."
+            "content": f"Xem bản ghi được phép và xử lý bản ghi {record_id}."
         }
     ]
 
@@ -188,11 +189,14 @@ def run_agent():
 
 
 def main():
+    parser = argparse.ArgumentParser(description="ECG Agent cho 21 bản ghi DS2")
+    parser.add_argument("--record-id", choices=ALLOWED_RECORD_IDS, default="100")
+    args = parser.parse_args()
     if not KEY:
         raise RuntimeError("Chưa đọc được API key từ .env.")
 
     audit("run_started")
-    result, summary, models_used = run_agent()
+    result, summary, models_used = run_agent(args.record_id)
 
     print("\nSỐ LIỆU TỪ API")
     print(json.dumps(result, ensure_ascii=False, indent=2))

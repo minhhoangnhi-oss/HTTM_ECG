@@ -8,7 +8,7 @@
 :root{color-scheme:light;--bg:#f3f6fa;--ink:#17263a;--muted:#64748b;--line:#e1e8f0;--blue:#2563eb;--green:#059669}
 *{box-sizing:border-box}
 body{margin:0;font:15px/1.6 "Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink)}
-button,textarea{font:inherit}
+button,textarea,select{font:inherit}
 button{cursor:pointer}
 button:disabled{cursor:wait;opacity:.55}
 .layout{display:grid;grid-template-columns:290px minmax(0,1fr);min-height:100vh}
@@ -25,6 +25,9 @@ button:disabled{cursor:wait;opacity:.55}
 .dot.bad{background:#fbbf24}
 .meta{font-size:13px;color:#b4c5db;margin-top:10px;overflow-wrap:anywhere}
 .record{font-size:26px;font-weight:700;letter-spacing:.5px}
+.record-select{width:100%;background:#122238;color:#e9f1fa;border:1px solid #6a829f;border-radius:9px;padding:10px;margin:6px 0}
+.record-select:focus{outline:2px solid #75e0c0;outline-offset:2px}
+.record-select:disabled{opacity:.65}
 .sidebar .note{font-size:12px;color:#a6b7ce}
 .result-empty{font-size:13px;color:#a6b7ce}
 .result-meta{font-size:13px;color:#b4c5db;margin-bottom:14px}
@@ -89,9 +92,11 @@ a{color:inherit}
 </section>
 
 <section class="panel">
-<h2>BẢN GHI ĐƯỢC PHÉP</h2>
-<div class="record">100</div>
-<div class="meta">PhysioNet MIT-BIH · MLII · 360 Hz</div>
+<h2>CHỌN BẢN GHI DS2</h2>
+<label for="recordSelect" class="note">Bộ kiểm tra độc lập · 21 bản ghi</label>
+<select id="recordSelect" class="record-select" aria-label="Chọn bản ghi DS2" disabled><option value="100">Đang tải danh sách…</option></select>
+<div class="meta">PhysioNet MIT-BIH · 360 Hz</div>
+<div class="note">Chọn một bản rồi gửi yêu cầu. Nếu gõ mã khác trong câu hỏi, Agent sẽ xét mã bạn gõ.</div>
 <div id="recordStatus" class="meta">Đang kiểm tra dữ liệu…</div>
 </section>
 
@@ -115,8 +120,8 @@ a{color:inherit}
 <form id="form" class="composer">
 <div class="suggestions">
 <button class="suggestion" type="button" data-prompt="Liệt kê các bản ghi được phép truy cập.">Xem bản ghi</button>
-<button class="suggestion" type="button" data-prompt="Phân tích bản ghi 100 và tóm tắt kết quả từ API.">Phân tích bản ghi 100</button>
-<button class="suggestion" type="button" data-prompt="Cho biết số nhịp dự đoán theo các lớp N, S, V, F, Q của bản ghi 100.">Thống kê các lớp</button>
+<button id="classifySuggestion" class="suggestion" type="button" data-kind="classify">Phân tích bản đang chọn</button>
+<button class="suggestion" type="button" data-kind="counts">Thống kê các lớp</button>
 </div>
 <div class="input-row">
 <textarea id="input" maxlength="1500" rows="2" aria-label="Yêu cầu gửi Agent" placeholder="Ví dụ: Phân tích bản ghi 100 và tóm tắt kết quả…"></textarea>
@@ -132,6 +137,8 @@ const chat = document.getElementById("chat");
 const input = document.getElementById("input");
 const send = document.getElementById("send");
 const reset = document.getElementById("reset");
+const recordSelect = document.getElementById("recordSelect");
+let recordCatalog = [];
 const labels = ["N", "S", "V", "F", "Q"];
 let history = [];
 let busy = false;
@@ -152,6 +159,7 @@ function setBusy(value) {
     send.disabled = value;
     reset.disabled = value;
     input.disabled = value;
+    recordSelect.disabled = value || recordCatalog.length === 0;
     document.querySelectorAll(".suggestion").forEach(button => {
         button.disabled = value;
     });
@@ -204,7 +212,7 @@ function renderSummary(parent, text) {
 
 function welcome() {
     const {card} = assistantCard();
-    renderSummary(card, "Chào bạn! Tôi hỗ trợ xem và phân tích bản ghi ECG 100.\nBạn có thể chọn một gợi ý bên dưới hoặc nhập yêu cầu. Số liệu phân loại được lấy từ API chạy mô hình ONNX.");
+    renderSummary(card, "Chào bạn! Tôi hỗ trợ phân tích 21 bản ghi thuộc tập kiểm tra DS2. Chọn bản ghi ở bên trái trước khi gửi yêu cầu.\nBạn có thể chọn một gợi ý bên dưới hoặc nhập yêu cầu. Số liệu phân loại được lấy từ API chạy mô hình ONNX.");
 }
 
 function updateResult(result) {
@@ -309,6 +317,7 @@ async function submitMessage(event) {
     event.preventDefault();
     const message = input.value.trim();
     if (!message || busy) return;
+    if (recordCatalog.length === 0) return;
 
     const past = history.slice(-6).map(item => ({
         role: item.role,
@@ -322,7 +331,7 @@ async function submitMessage(event) {
 
     const pending = assistantCard();
     const typing = element("div", "typing");
-    typing.append(element("span", "spinner"), element("span", "", "Agent đang lấy dữ liệu và trả lời…"));
+    typing.append(element("span", "spinner"), element("span", "", "Đang nghĩ…"));
     pending.card.append(typing);
     setBusy(true);
     scrollChat();
@@ -331,7 +340,7 @@ async function submitMessage(event) {
         const data = await requestJSON("/agent/chat", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({message, history: past})
+            body: JSON.stringify({message, history: past, selected_record_id: recordSelect.value})
         });
         pending.wrapper.remove();
         const {card} = assistantCard();
@@ -374,6 +383,17 @@ async function submitMessage(event) {
     }
 }
 
+function updateSelectedRecord() {
+    const recordId = recordSelect.value;
+    const entry = recordCatalog.find(item => item.record_id === recordId);
+    const readyCount = recordCatalog.filter(item => item.ready).length;
+    document.getElementById("recordStatus").textContent = entry?.ready
+        ? `Bản ${recordId} đã có dữ liệu · ${readyCount}/${recordCatalog.length} bản sẵn sàng`
+        : `Bản ${recordId} còn thiếu .dat, .hea hoặc .atr · ${readyCount}/${recordCatalog.length} bản sẵn sàng`;
+    document.getElementById("classifySuggestion").textContent = `Phân tích bản ghi ${recordId}`;
+    input.placeholder = `Ví dụ: Phân tích bản ghi ${recordId} và tóm tắt kết quả…`;
+}
+
 async function refreshStatus() {
     const dot = document.getElementById("statusDot");
     try {
@@ -387,8 +407,25 @@ async function refreshStatus() {
         document.getElementById("modelVersion").textContent = `Mô hình ECG: ${health.model_version ?? "Chưa nạp"}`;
         document.getElementById("llmStatus").textContent = config.key_configured
             ? `LLM: ${config.requested_model}` : "Chưa có API key OpenRouter";
-        document.getElementById("recordStatus").textContent = config.record_ready
-            ? "Dữ liệu đã sẵn sàng" : "Thiếu dữ liệu 100.dat / .hea / .atr";
+        recordCatalog = config.records || [];
+        const previous = recordSelect.value;
+        const currentIds = Array.from(recordSelect.options, option => option.value).join(",");
+        const nextIds = recordCatalog.map(item => item.record_id).join(",");
+        if (currentIds !== nextIds) {
+            recordSelect.replaceChildren();
+            for (const entry of recordCatalog) {
+                const option = element("option", "", "");
+                option.value = entry.record_id;
+                recordSelect.append(option);
+            }
+        }
+        for (const option of recordSelect.options) {
+            const entry = recordCatalog.find(item => item.record_id === option.value);
+            option.textContent = `${option.value} · DS2${entry?.ready ? "" : " · Chưa tải dữ liệu"}`;
+        }
+        if (recordCatalog.some(item => item.record_id === previous)) recordSelect.value = previous;
+        recordSelect.disabled = busy || recordCatalog.length === 0;
+        updateSelectedRecord();
     } catch {
         dot.className = "dot bad";
         document.getElementById("apiStatus").textContent = "Chưa kết nối được dịch vụ";
@@ -404,9 +441,24 @@ input.addEventListener("keydown", event => {
 });
 document.querySelectorAll(".suggestion").forEach(button => {
     button.addEventListener("click", () => {
-        input.value = button.dataset.prompt;
+        const recordId = recordSelect.value;
+        if (button.dataset.kind === "classify") {
+            input.value = `Phân tích bản ghi ${recordId} và tóm tắt kết quả từ API.`;
+        } else if (button.dataset.kind === "counts") {
+            input.value = `Cho biết số nhịp dự đoán theo các lớp N, S, V, F, Q của bản ghi ${recordId}.`;
+        } else {
+            input.value = button.dataset.prompt;
+        }
         input.focus();
     });
+});
+recordSelect.addEventListener("change", () => {
+    history = [];
+    updateSelectedRecord();
+    const panel = document.getElementById("resultPanel");
+    panel.replaceChildren();
+    panel.className = "result-empty";
+    panel.textContent = `Đã chọn bản ghi ${recordSelect.value}. Gửi yêu cầu để xem kết quả mới.`;
 });
 reset.addEventListener("click", () => {
     history = [];
