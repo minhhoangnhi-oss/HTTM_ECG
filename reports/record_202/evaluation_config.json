@@ -1,0 +1,23 @@
+{
+  "model_variant": "cnn_rr",
+  "training_seed": 42,
+  "model_path": "/kaggle/input/datasets/quanghuy10/tv2-results/exports/cnn_rr_fp32.onnx",
+  "normalization_path": "/kaggle/input/datasets/quanghuy10/tv2-results/normalization.json",
+  "original_predictions_path": "/kaggle/input/datasets/quanghuy10/tv2-results/results/ds2_predictions.csv",
+  "record_202_path": "/kaggle/input/datasets/quanghuy10/record-202/record_202.npz",
+  "record_202_sha256": "b84ae256e5c2f6cc0876c2071bb311ebb5b9a1db50cf8c92ff79d20619432013",
+  "class_names": [
+    "N",
+    "S",
+    "V",
+    "F",
+    "Q"
+  ],
+  "normalization_refitted": false,
+  "retrained": false,
+  "main_result": "DS2_without_202",
+  "supplementary_result": "DS2_with_202",
+  "patient_overlap_note": "Record 202 shares patient P_201 with training record 201.",
+  "original_ds2_predictions": "Saved PyTorch FP32 predictions",
+  "record_202_predictions": "ONNX FP32 probabilities with argmax"
+}

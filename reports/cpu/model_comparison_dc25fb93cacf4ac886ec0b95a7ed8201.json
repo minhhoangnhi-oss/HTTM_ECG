@@ -1,0 +1,154 @@
+{
+  "measured_at": "2026-10-21T17:58:00.983907+00:00",
+  "script_sha256": "0d44804c5e2b04c887a94fdaa7721bcd4427cb50d66ee511c8d35edf032c2bd6",
+  "protocol": {
+    "device": "cpu",
+    "dtype": "float32",
+    "backend": "PyTorch eager",
+    "torch_intraop_threads": 1,
+    "torch_interop_threads": 1,
+    "batch_sizes": [
+      1,
+      64,
+      256
+    ],
+    "warmup_calls_per_model_per_batch": 20,
+    "measured_calls_per_model_per_batch": 100,
+    "order": "seeded random model order within every paired round",
+    "random_seed": 42,
+    "timed_scope": "CPU forward plus softmax; preallocated normalized input tensors",
+    "excluded": [
+      "checkpoint loading",
+      "normalization",
+      "tensor creation",
+      "HTTP",
+      "LLM",
+      "output validation"
+    ],
+    "input": "four handed-over DS2 reference beats, repeated to obtain the requested batch size",
+    "limitations": "A repeated-input model microbenchmark, not a new accuracy evaluation, full DS2 timing, or API/ONNX latency."
+  },
+  "host": {
+    "os": "Windows-11-10.0.26100-SP0",
+    "machine": "AMD64",
+    "processor": "AMD64 Family 25 Model 33 Stepping 2, AuthenticAMD",
+    "logical_cpu_count": 12,
+    "python": "3.14.8",
+    "torch": "2.11.0+cpu",
+    "numpy": "2.5.3",
+    "mkldnn_available": true
+  },
+  "source_bundle": "C:\\Users\\Admin\\Downloads\\Đại học\\Hệ thống thông minh\\TV2_MITBIH_20261008_094922",
+  "input_sha256": {
+    "checkpoints/final_baseline_seed42.pt": "c35e7709d88ca722cd9a599b7d282e21b6dd88558ab401553a2fbb4e5f59b2a2",
+    "checkpoints/final_cnn_rr_seed42.pt": "66b5d9e8f3fba80acf47acccc31e35a4913e10fab27a0bcbd6a8fb463dbf5035",
+    "normalization.json": "2d92ef83f86480ac33f4b27c429ed372b24d220205dc4b8bba48291abf5fc333",
+    "exports/sample_io.npz": "965bb6f50c57497da3a3b48032f2442af76280589ec54ed495632b6c90a3e0a2",
+    "results/ds2_predictions.csv": "4903856949519a5a03a0e5ab00ee9f92f6eb492d9cd0c6a7c12ae0311e4c8cb9"
+  },
+  "models": {
+    "baseline": {
+      "parameter_count": 11173,
+      "tensor_storage_bytes": 44692,
+      "state_dict_serialized_bytes": 48645,
+      "checkpoint_file_bytes": 51045,
+      "checkpoint_sha256": "c35e7709d88ca722cd9a599b7d282e21b6dd88558ab401553a2fbb4e5f59b2a2",
+      "training_seed": 42
+    },
+    "cnn_rr": {
+      "parameter_count": 12021,
+      "tensor_storage_bytes": 48084,
+      "state_dict_serialized_bytes": 53241,
+      "checkpoint_file_bytes": 55465,
+      "checkpoint_sha256": "66b5d9e8f3fba80acf47acccc31e35a4913e10fab27a0bcbd6a8fb463dbf5035",
+      "training_seed": 42
+    }
+  },
+  "validation": {
+    "baseline": {
+      "reference_samples": 4,
+      "max_abs_probability_error": 1.1920928955078125e-07,
+      "labels_match": true
+    },
+    "cnn_rr": {
+      "reference_samples": 4,
+      "max_abs_probability_error": 1.1920928955078125e-07,
+      "labels_match": true
+    }
+  },
+  "latency_summary": [
+    {
+      "model_variant": "baseline",
+      "batch_size": 1,
+      "measured_calls": 100,
+      "median_ms": 0.20405,
+      "p95_ms": 0.21236999999999998,
+      "mean_ms": 0.207831,
+      "sample_sd_ms": 0.022400855390413598,
+      "min_ms": 0.2005,
+      "max_ms": 0.4219,
+      "median_ms_per_beat": 0.20405
+    },
+    {
+      "model_variant": "cnn_rr",
+      "batch_size": 1,
+      "measured_calls": 100,
+      "median_ms": 0.2372,
+      "p95_ms": 0.2549949999999999,
+      "mean_ms": 0.24243799999999996,
+      "sample_sd_ms": 0.018606107284513552,
+      "min_ms": 0.2331,
+      "max_ms": 0.3732,
+      "median_ms_per_beat": 0.2372
+    },
+    {
+      "model_variant": "baseline",
+      "batch_size": 64,
+      "measured_calls": 100,
+      "median_ms": 2.5828499999999996,
+      "p95_ms": 2.8607650000000002,
+      "mean_ms": 2.6292769999999996,
+      "sample_sd_ms": 0.15946529140419946,
+      "min_ms": 2.5527,
+      "max_ms": 3.9646,
+      "median_ms_per_beat": 0.040357031249999994
+    },
+    {
+      "model_variant": "cnn_rr",
+      "batch_size": 64,
+      "measured_calls": 100,
+      "median_ms": 2.6552,
+      "p95_ms": 2.8575899999999996,
+      "mean_ms": 2.6937449999999994,
+      "sample_sd_ms": 0.1466150600495506,
+      "min_ms": 2.607,
+      "max_ms": 3.8841,
+      "median_ms_per_beat": 0.0414875
+    },
+    {
+      "model_variant": "baseline",
+      "batch_size": 256,
+      "measured_calls": 100,
+      "median_ms": 9.211200000000002,
+      "p95_ms": 9.841305,
+      "mean_ms": 9.300967,
+      "sample_sd_ms": 0.2374278170180137,
+      "min_ms": 9.0739,
+      "max_ms": 10.1392,
+      "median_ms_per_beat": 0.035981250000000006
+    },
+    {
+      "model_variant": "cnn_rr",
+      "batch_size": 256,
+      "measured_calls": 100,
+      "median_ms": 9.2723,
+      "p95_ms": 9.604175,
+      "mean_ms": 9.326281,
+      "sample_sd_ms": 0.1741491672780446,
+      "min_ms": 9.1179,
+      "max_ms": 10.2441,
+      "median_ms_per_beat": 0.036219921875
+    }
+  ],
+  "size_notes": "tensor_storage_bytes counts FP32 state tensors; state_dict_serialized_bytes uses identical torch.save serialization. Checkpoint size includes metadata. These sizes are not ONNX artifact sizes."
+}

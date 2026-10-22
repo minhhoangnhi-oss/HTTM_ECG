@@ -269,3 +269,65 @@ Chưa đo lại benchmark trên bản có giao diện web. Các số liệu benc
 Thời gian hoàn thành hiển thị trên giao diện gồm gọi OpenRouter và công cụ; không được dùng thay cho độ trễ API `/predict`.
 
 Kiểm tra từ chối yêu cầu ngoài quyền đã thực hiện trước lần cập nhật system prompt cuối. Các kiểm tra API và ECG thật đã thực hiện trước lần thay system prompt và bổ sung thông báo lỗi; hai thay đổi này không sửa đường xử lý `/predict`.
+
+## 11. Bổ sung hồ sơ đã chốt ngày 22/10/2026
+
+### Dữ liệu và CI TV1
+
+Đã chạy script TV1 trên đủ 43 bản ghi trong môi trường Windows hiện có: DS1 51.003 nhịp/22 bản ghi; DS2 47.557 nhịp/21 bản ghi; giao bản ghi và bệnh nhân rỗng. Số nhịp N/S/V/F/Q lần lượt là 45.849/944/3.788/414/8 (DS1) và 42.180/1.782/3.201/387/7 (DS2).
+
+Bootstrap chạy đủ baseline/cnn_rr × seed 42/123/2026, 1.000 lượt có hoàn lại theo bản ghi, cố định năm lớp. Toàn bộ 66 dòng khớp bảng đã đối chiếu. Hồ sơ: notebooks/tv1/verification/pc_run_20261022/. Đây là xác nhận trong môi trường hiện có, chưa phải chạy sạch toàn chuỗi. Hash NPZ mới khác hash lịch sử TV2; số lượng, metadata và thống kê khớp không đủ chứng minh mọi phần tử giống nhau.
+
+### Kết quả mô hình DS2
+
+Các giá trị dưới đây là trung bình ± SD mẫu của ba seed, đơn vị %:
+
+| Chỉ số | CNN cơ sở | CNN + RR |
+|---|---:|---:|
+| F1 macro | 31,10 ± 6,00 | 48,75 ± 0,52 |
+| Se S | 88,01 ± 5,65 | 83,69 ± 2,17 |
+| PPV S | 9,56 ± 4,68 | 41,55 ± 7,08 |
+| Se V | 82,00 ± 6,36 | 88,32 ± 3,89 |
+| PPV V | 58,01 ± 11,13 | 84,37 ± 7,01 |
+| Accuracy | 50,74 ± 14,48 | 83,37 ± 2,23 |
+
+CNN + RR cải thiện F1 macro nhưng Se S trung bình giảm. Không diễn đạt mọi chỉ số đều cải thiện. Bảng từng seed, ablation, ma trận nhầm lẫn và chuyển đổi nằm trong reports/tv2/; CI nằm trong notebooks/tv1/verification/.
+
+### So sánh CPU hai mô hình
+
+Ngày đo: 22/10/2026 theo giờ Việt Nam. Windows 11, Ryzen 5 5600X; Python 3.14.8, PyTorch 2.11.0+cpu, NumPy 2.5.3. PyTorch eager FP32, một luồng intra-op và một inter-op; cùng checkpoint seed 42; 20 lượt làm nóng và 100 lượt đo mỗi cặp model/batch; thứ tự hai mô hình ngẫu nhiên theo seed 42.
+
+| Batch | CNN cơ sở median / P95 (ms) | CNN + RR median / P95 (ms) |
+|---|---:|---:|
+| 1 | 0,2041 / 0,2124 | 0,2372 / 0,2550 |
+| 64 | 2,5828 / 2,8608 | 2,6552 / 2,8576 |
+| 256 | 9,2112 / 9,8413 | 9,2723 / 9,6042 |
+
+| Kích thước cùng cách tính | CNN cơ sở | CNN + RR |
+|---|---:|---:|
+| Số tham số | 11.173 | 12.021 |
+| Tensor tham số (byte) | 44.692 | 48.084 |
+| state_dict cùng cách tuần tự hóa (byte) | 48.645 | 53.241 |
+
+Đo forward + softmax trên tensor đã chuẩn hóa/cấp phát; bốn nhịp tham chiếu được lặp lại để tạo batch. Không gồm tải checkpoint, tiền xử lý, chuẩn hóa, tạo tensor, HTTP, LLM hoặc kiểm tra đầu ra. Không phải thời gian suy luận toàn DS2 hoặc độ trễ API/ONNX. Hai checkpoint đã khớp mẫu tham chiếu với sai số xác suất tối đa 1,1920929e-7.
+
+Bằng chứng gốc: reports/cpu/model_comparison_dc25fb93cacf4ac886ec0b95a7ed8201.json. Script: benchmark_model_comparison.py.
+
+### Kiểm tra ảnh hưởng bản ghi 202
+
+Giữ CNN + RR seed 42 và chuẩn hóa đã chốt, không train lại. Bản 202 có 2.135 nhịp; test gốc 47.557 nhịp và test bổ sung 49.692 nhịp.
+
+| Chỉ số (%) | Không 202 — kết quả chính | Có 202 — bổ sung | Chênh lệch (điểm %) |
+|---|---:|---:|---:|
+| Se S | 85,58 | 84,92 | −0,66 |
+| PPV S | 33,69 | 32,62 | −1,07 |
+| Se V | 83,94 | 84,01 | +0,06 |
+| PPV V | 92,37 | 90,29 | −2,08 |
+| F1 macro | 48,86 | 47,98 | −0,89 |
+| Accuracy | 85,55 | 84,61 | −0,94 |
+
+201 và 202 cùng người. Vì vậy bảng có 202 chỉ khảo sát thay đổi tập đánh giá, không thay kết quả độc lập theo người của DS2 chính; không dùng thay đổi này để kết luận nhân quả về rò rỉ dữ liệu. Bảng gốc và cấu hình: reports/record_202/.
+
+### Phạm vi lần đồng bộ tài liệu
+
+Lần này bổ sung bằng chứng đã có, tách hai luồng notebook TV2 và làm rõ hướng dẫn chạy lại. Không huấn luyện lại, không đổi ONNX, chuẩn hóa hoặc code suy luận. Chưa xác nhận chạy toàn chuỗi trên môi trường mới; chưa chạy lại benchmark API trên bản có web.

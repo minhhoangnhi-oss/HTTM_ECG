@@ -20,6 +20,11 @@ Phiên bản hiện tại chạy mô hình ONNX FP32 thật trên CPU, không c�
 | Benchmark API | 100/100 request thành công |
 | Tải tương đương khoảng một giờ | Đã đo bằng hai lượt bản ghi 100 |
 | Đối chiếu toàn bộ DS2 qua API | Chưa thực hiện |
+| Notebook huấn luyện và đánh giá TV2 | Có tại notebooks/tv2/; tách riêng notebook vẽ hình |
+| Tái tạo TV1 trên PC ngày 22/10 | Đủ 43 bản ghi; DS1/DS2 và 66 dòng CI đã đối chiếu |
+| So sánh CPU CNN/CNN + RR | Đã đo cùng backend PyTorch CPU, seed 42 |
+| Đánh giá bổ sung bản ghi 202 | Có bảng so sánh, không train lại |
+| Chạy toàn chuỗi trên môi trường mới cài | Chưa xác nhận |
 
 Docker này phục vụ suy luận và chạy Agent. Đây không phải môi trường huấn luyện GPU cho TV1/TV2.
 
@@ -27,6 +32,8 @@ Docker này phục vụ suy luận và chạy Agent. Đây không phải môi tr
 
 - [SYSTEM_DESIGN.md](SYSTEM_DESIGN.md): sơ đồ hệ thống, luồng dữ liệu và trách nhiệm các thành viên.
 - [TECHNICAL_REQUIREMENTS.md](TECHNICAL_REQUIREMENTS.md): quy ước dữ liệu, giao diện và mục tiêu đo.
+- [REPRODUCIBILITY.md](REPRODUCIBILITY.md): đầu vào, môi trường và cách chạy lại TV1/TV2/CPU.
+- [reports/README.md](reports/README.md): bằng chứng số liệu được lưu cùng kho mã.
 - [PERFORMANCE_RESULTS.md](PERFORMANCE_RESULTS.md): kết quả tích hợp, benchmark, cấu hình máy và giới hạn.
 
 Bảng trạng thái trong TECHNICAL_REQUIREMENTS.md ghi nhận thời điểm lập đặc tả trước benchmark. Kết quả đo sau đó nằm trong PERFORMANCE_RESULTS.md.
@@ -45,6 +52,10 @@ Bảng trạng thái trong TECHNICAL_REQUIREMENTS.md ghi nhận thời điểm l
 | check_real_ecg.py | Đối chiếu bản ghi thật với TV1 và API |
 | check_api_contract.py | Kiểm tra giao diện và giới hạn công cụ |
 | benchmark_api.py | Benchmark API và tài nguyên |
+| benchmark_model_comparison.py | So sánh CNN/CNN + RR trên cùng CPU |
+| notebooks/tv1/ | Tiền xử lý, bootstrap và hồ sơ xác nhận |
+| notebooks/tv2/ | Huấn luyện, đánh giá, vẽ hình và cấu hình thí nghiệm |
+| reports/ | Bảng kết quả TV2, so sánh 202 và benchmark CPU |
 | models/tv2/ | Cấu hình, chuẩn hóa và ONNX triển khai |
 | data/ | Dữ liệu cục bộ, không commit mặc định |
 | logs/ | Nhật ký Agent, không commit mặc định |
@@ -308,9 +319,9 @@ Cấu hình đo: Ryzen 5 5600X, 6 lõi/12 luồng, khoảng 32 GiB RAM máy ch�
 | Hai lượt bản ghi 100, tương đương 60,19 phút | 0,708 giây |
 | RAM peak container từ khi tạo, tại thời điểm đo | 312,87 MiB |
 | Tệp ONNX | 82.719 byte |
-| Docker image | 956.832.376 byte |
+| Docker image đã đo trước khi thêm web | 956.832.376 byte |
 
-Chi tiết phương pháp và giới hạn nằm trong PERFORMANCE_RESULTS.md.
+Các số API/RAM/image ở bảng trên thuộc phép đo ngày 09/10, trước khi thêm web; không phải phép đo lại trên bản hiện tại. Chi tiết phương pháp và giới hạn nằm trong PERFORMANCE_RESULTS.md.
 
 Tải tương đương một giờ là hai lượt của cùng bản ghi, không phải một bản ghi một giờ độc lập. RAM peak bao gồm vòng đời container, không phải RAM riêng của model.
 
@@ -350,7 +361,7 @@ Model INT8 trong bundle TV2 là bản thử nghiệm, chưa được chọn đ�
 
 ### Bàn giao báo cáo
 
-TV1/TV2 tiếp tục bàn giao các kết quả theo phân công: chia dữ liệu, quá trình huấn luyện, đánh giá, khoảng tin cậy và phân tích sai số.
+Đã nhận hồ sơ dữ liệu, huấn luyện/đánh giá, CI và phân tích sai số của TV1/TV2. Notebook và cấu hình nằm trong notebooks/; các bảng kết quả nhỏ trong reports/. Gói TV2 đầy đủ, dữ liệu NPZ và ảnh minh họa gửi riêng. Xem REPRODUCIBILITY.md để chuẩn bị đầu vào chạy lại.
 
 TV3 đã có code tích hợp, sơ đồ, bảng yêu cầu và kết quả kiểm thử. Các bằng chứng JSON và audit cần gửi riêng khi tổng hợp báo cáo vì không được commit mặc định.
 
@@ -450,3 +461,15 @@ Bản xem trước được giữ tạm trong bộ nhớ tối đa một giờ v
 | `Dockerfile` | Đóng gói giao diện, backend và mô hình trong cùng image |
 
 Giao diện web và Agent dòng lệnh `agent_main.py` đều có thể sử dụng.
+
+## 10. Kết quả mô hình và cập nhật ngày 22/10/2026
+
+Cải tiến đã thực hiện là thêm nhánh RR vào CNN 1D. Attention/focal loss không phải mô hình được triển khai.
+
+- DS1: 51.003 nhịp/22 bản ghi; DS2 chính: 47.557 nhịp/21 bản ghi, không có 202.
+- F1 macro DS2, trung bình ± SD ba seed: CNN cơ sở 31,10 ± 6,00%; CNN + RR 48,75 ± 0,52%.
+- CNN + RR seed 42 triển khai: F1 macro 48,86%; accuracy 85,55%. Không thay bằng trung bình ba seed.
+- Nhánh RR cải thiện F1 macro trung bình; Se lớp S trung bình giảm. Xem đủ chỉ số trong reports/tv2/.
+- 201 và 202 thuộc cùng người; kết quả có 202 chỉ là đánh giá bổ sung, không thay kết quả test độc lập chính.
+- Bootstrap CI: sáu cặp mô hình–seed × 11 chỉ số = 66 dòng, cố định năm lớp; lấy mẫu 1.000 lượt theo bản ghi. Hồ sơ PC: notebooks/tv1/verification/pc_run_20261022/.
+- Kiểm tra lại đầy đủ trên môi trường mới vẫn chưa được xác nhận. Không dùng việc kho Git sạch làm bằng chứng đã chạy sạch từ đầu.

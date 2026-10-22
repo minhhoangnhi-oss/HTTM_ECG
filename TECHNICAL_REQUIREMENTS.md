@@ -200,3 +200,11 @@ Không thay FP32 bằng mô hình INT8 thử nghiệm nếu chưa đánh giá v�
 | Đối chiếu trên toàn bộ DS2 qua API | Chưa thực hiện |
 
 Kết quả kiểm tra bản ghi 100 được lưu trong outputs/check_real_ecg_100.json. Báo cáo Agent và nhật ký nằm trong outputs/ và logs/, không được commit mặc định lên GitHub.
+
+## 8. Cập nhật trạng thái ngày 22/10/2026
+
+Bảng ở mục 7 là ghi nhận tại thời điểm lập đặc tả, không phải danh sách công việc hiện tại. Sau đó đã hoàn thành benchmark API 100/100 request, tải tương đương một giờ và đo RAM (ngày 09/10); có giao diện web, so sánh CPU hai mô hình và hồ sơ chạy TV1 trên đủ 43 bản ghi. Các kết quả và giới hạn được trình bày tại PERFORMANCE_RESULTS.md và reports/.
+
+Đã có notebook/code và cấu hình cho TV1/TV2 trong kho mã. Bootstrap cố định năm lớp, 1.000 lượt theo bản ghi, đủ sáu cặp mô hình–seed. Đánh giá 202 là bổ sung trên mô hình cố định; DS2 chính vẫn loại 202 để tránh trùng người với 201.
+
+Còn chưa xác nhận: chạy lại đầy đủ theo hướng dẫn trên môi trường mới cài. Chưa đối chiếu toàn DS2 qua HTTP API. Đây là hai phạm vi khác nhau: không dùng phép đối chiếu ONNX toàn DS2 để khẳng định đã kiểm tra API toàn DS2. Cách chuẩn bị và chạy lại nằm tại REPRODUCIBILITY.md.

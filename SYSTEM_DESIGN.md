@@ -136,7 +136,7 @@ LLM tóm tắt số liệu này bằng tiếng Việt. Bản tóm tắt và số
 
 Notebook huấn luyện và toàn bộ bộ dữ liệu không cần nằm trong Docker image phục vụ suy luận.
 
-Các đánh giá phân loại, khoảng tin cậy và phân tích sai số của TV1/TV2 vẫn phải được bàn giao để tổng hợp báo cáo cuối cùng.
+Đã nhận đánh giá phân loại, khoảng tin cậy và phân tích sai số của TV1/TV2. Code TV1/TV2 nằm trong notebooks/; bảng kết quả nhỏ nằm trong reports/; dữ liệu và gói TV2 đầy đủ được giữ riêng.
 
 ## 5. Thành phần triển khai
 
@@ -281,3 +281,15 @@ Backend kiểm tra Origin khi trình duyệt gửi header này, token của bả
 - LLM không có công cụ chạy shell, đọc tệp tùy ý hay trực tiếp lưu báo cáo.
 - Lời tóm tắt có thể sai; số liệu API được hiển thị riêng để đối chiếu.
 - Thay đổi system prompt hoặc HTML cần build image và tạo lại container để có hiệu lực.
+
+## 10. Luồng thí nghiệm và hồ sơ ngày 22/10/2026
+
+Tiền xử lý TV1 tạo DS1/DS2 chưa Z-score. TV2 chia fold trong DS1, fit chuẩn hóa và trọng số lớp chỉ trên phần train từng fold, chọn cấu hình bằng DS1; sau đó huấn luyện mô hình cuối trên toàn DS1 và đánh giá DS2. Hai mô hình dùng cùng ba seed 42/123/2026, cùng hai cấu hình và năm fold. Cải tiến là nhánh RR; mô hình triển khai cố định CNN + RR seed 42, FP32.
+
+`notebooks/tv2/train_evaluate.ipynb` thực hiện huấn luyện–đánh giá–xuất mô hình. Phần vẽ lại hình từ gói kết quả lịch sử tách sang `figures_from_results.ipynb`. `evaluate_record_202.ipynb` giữ mô hình và chuẩn hóa đã chốt để kiểm tra thêm 202; không huấn luyện lại.
+
+`notebooks/tv1/tv1_pipeline.py` hỗ trợ tái tạo tiền xử lý và bootstrap từ dự đoán TV2. Hồ sơ chạy PC trên đủ 43 bản ghi nằm tại `notebooks/tv1/verification/pc_run_20261022/`. Bản chạy này đúng số nhịp, metadata và 66 dòng CI; chưa chứng minh toàn bộ tensor giống từng phần tử với dữ liệu huấn luyện lịch sử. Hash cũ và hash chạy mới được giữ riêng.
+
+`benchmark_model_comparison.py` đo forward + softmax của hai checkpoint seed 42 trên cùng backend PyTorch CPU; khác phép đo HTTP/ONNX trong `benchmark_api.py`. Bảng bổ sung có/không 202 và benchmark CPU nằm tại reports/. Hướng dẫn chạy lại: REPRODUCIBILITY.md.
+
+Việc cập nhật tài liệu và tách notebook không phải bằng chứng chạy lại toàn chuỗi trên môi trường sạch. Mô hình, chuẩn hóa và đường xử lý API giữ nguyên trong lần cập nhật này.

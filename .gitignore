@@ -11,3 +11,4 @@ logs/
 *.hea
 *.atr
 outputs/
+.venv*/
