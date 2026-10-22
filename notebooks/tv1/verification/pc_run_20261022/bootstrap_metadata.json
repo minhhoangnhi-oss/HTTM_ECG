@@ -1,0 +1,18 @@
+{
+  "input_sha256": "4903856949519a5a03a0e5ab00ee9f92f6eb492d9cd0c6a7c12ae0311e4c8cb9",
+  "replicates": 1000,
+  "rng": "numpy RandomState",
+  "seed_reset_per_model_seed": 42,
+  "resampling_unit": "record; 202 excluded so records represent different patients",
+  "records_per_group": 21,
+  "class_labels": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "zero_division": 0,
+  "ci_method": "percentile 2.5/97.5, numpy linear interpolation",
+  "implementation": "Sum complete per-record confusion matrices with replacement, including multiplicity; equivalent to concatenating resampled records."
+}

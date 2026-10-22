@@ -1,0 +1,49 @@
+{
+  "sampling_rate_hz": 360,
+  "ecg_channel": "MLII (Ưu tiên MLII, mặc định lấy kênh 0)",
+  "beat_window": {
+    "left_samples": 90,
+    "right_samples": 144,
+    "total_samples": 234,
+    "ecg_tensor_shape": "[N, 1, 234]"
+  },
+  "r_peak_indexing": "0-based indexing (chỉ số bắt đầu từ 0)",
+  "filtering": {
+    "method": "Butterworth bandpass filter",
+    "lowcut_hz": 0.5,
+    "highcut_hz": 40.0,
+    "order": 2,
+    "zero_phase": true
+  },
+  "normalization": "none (Dữ liệu chưa chuẩn hóa Z-score, giữ nguyên biên độ)",
+  "rr_features": {
+    "unit": "seconds (giây)",
+    "rr_tensor_shape": "[N, 3]",
+    "vector_format": [
+      "RR_pre",
+      "RR_post",
+      "RR_local_avg"
+    ],
+    "rr_local_avg_calculation": "mean(RR_pre[max(0, k-10) : k])",
+    "edge_beats_handling": "Nhịp đầu: RR_pre = RR_post[0], RR_local_avg = RR_post[0]. Nhịp cuối: RR_post = RR_pre[-1]."
+  },
+  "class_mapping": {
+    "N": 0,
+    "S": 1,
+    "V": 2,
+    "F": 3,
+    "Q": 4
+  },
+  "ds1_ds2_partition": {
+    "ds1_records_count": 22,
+    "ds2_records_count": 21,
+    "excluded_records": [
+      "102",
+      "104",
+      "107",
+      "202",
+      "217"
+    ],
+    "patient_overlap": false
+  }
+}

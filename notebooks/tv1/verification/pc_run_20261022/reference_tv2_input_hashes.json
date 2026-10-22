@@ -1,0 +1,14 @@
+{
+  "ds1.npz": {
+    "md5": "610764294f469688dc11e6ed3adead9d",
+    "sha256": "11b030d3cabbf51e39fa93fb89d48411662c4e671d98e646c8c1093b4cb500b3"
+  },
+  "ds2.npz": {
+    "md5": "264a5c4e63c0555ff377c0c1ab3ccf99",
+    "sha256": "a789409757f35fee38a45d5e6097fbebd3e8b6cc73ef7f096cc2c8b02d2fad6e"
+  },
+  "preprocess_config.json": {
+    "md5": "2ae22eefa342053f118e1fb4212c2d87",
+    "sha256": "0526749c35ce3336fdf07e3e6fb0adff1a712498be8c9d156c460cee968dcfe1"
+  }
+}

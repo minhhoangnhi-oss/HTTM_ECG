@@ -1,0 +1,82 @@
+{
+  "ds1": {
+    "beats": 51003,
+    "records": 22,
+    "class_counts_N_S_V_F_Q": [
+      45849,
+      944,
+      3788,
+      414,
+      8
+    ],
+    "nonfinite_waveform": 0,
+    "nonfinite_rr": 0,
+    "duplicate_record_r_peak": 0,
+    "exact_duplicate_waveforms": 0,
+    "ecg_min_max_mV": [
+      -3.4908711910247803,
+      4.003549098968506
+    ],
+    "rr_min_max_seconds_by_feature": [
+      [
+        0.25,
+        0.25,
+        0.3166666626930237
+      ],
+      [
+        100.02222442626953,
+        100.02222442626953,
+        11.348333358764648
+      ]
+    ],
+    "abnormal_rr_note": "Extremes are recorded without clipping, preserving the handed-over pipeline."
+  },
+  "ds2": {
+    "beats": 47557,
+    "records": 21,
+    "class_counts_N_S_V_F_Q": [
+      42180,
+      1782,
+      3201,
+      387,
+      7
+    ],
+    "nonfinite_waveform": 0,
+    "nonfinite_rr": 0,
+    "duplicate_record_r_peak": 0,
+    "exact_duplicate_waveforms": 0,
+    "ecg_min_max_mV": [
+      -3.0635862350463867,
+      3.3905367851257324
+    ],
+    "rr_min_max_seconds_by_feature": [
+      [
+        0.2888889014720917,
+        0.2888889014720917,
+        0.4258333146572113
+      ],
+      [
+        5.872222423553467,
+        5.872222423553467,
+        1.9586111307144165
+      ]
+    ],
+    "abnormal_rr_note": "Extremes are recorded without clipping, preserving the handed-over pipeline."
+  },
+  "ds1_statistics_match_tv2": true,
+  "ds1_statistics_for_validation_only": {
+    "ecg_mean": 0.010119017217772093,
+    "ecg_std": 0.37759451900475005,
+    "rr_mean": [
+      0.7785235945552929,
+      0.7785457610047392,
+      0.7785428904380115
+    ],
+    "rr_std": [
+      0.49549133582073135,
+      0.4955129232710033,
+      0.2272689599105361
+    ]
+  },
+  "ds2_metadata_matches_tv2_predictions": true
+}

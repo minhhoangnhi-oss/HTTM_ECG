@@ -1,0 +1,30 @@
+{
+  "source_notebook": "xulith (2).ipynb",
+  "source_sha256": "b0447d66c70395b47f8fd37ef5dcbedc6ec354f3c2a8d796e6756048b4aacc51",
+  "clean_notebook": "TV1_preprocess_bootstrap_final.ipynb",
+  "raw_wfdb_full_run_executed_here": false,
+  "source_function_comparison": {
+    "fixtures": 3,
+    "all_six_output_arrays_exactly_equal": true
+  },
+  "bootstrap_validation": {
+    "model_seed_groups": 6,
+    "replicates_per_group": 1000,
+    "output_metric_rows": 66,
+    "original_metrics_match_tv2_all_six_groups": true,
+    "deployed_11_ci_rows_match_verified_table": true,
+    "resampling_draws_compared_against_original_sklearn": 48,
+    "all_11_metrics_match": true
+  },
+  "environment_for_bootstrap_check": {
+    "python": "3.12.14",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+    "packages": {
+      "numpy": "2.3.5",
+      "scipy": "1.17.0",
+      "pandas": "2.2.3",
+      "wfdb": null
+    }
+  },
+  "next_required_check": "Restart and Run All on Kaggle with full WFDB source and TV2 predictions."
+}

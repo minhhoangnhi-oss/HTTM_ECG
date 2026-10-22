@@ -1,0 +1,9 @@
+{
+  "README.md": "b92d35ff3386817055eaf353cd0b7571acdefe8aa715b4f1cc9cff61257c14f9",
+  "TV1_preprocess_bootstrap_final.ipynb": "089c5603b41b6a6c3ad4c95d196dce22766c8322da65a9c3c9723b53774065fb",
+  "requirements_tv1.txt": "3491667e068c0fe72c2d8349f2645c7e92a4b1a6dff8bff00d62bd1c8861b67d",
+  "tv1_pipeline.py": "4bcebed9feb24d76ed71e942a2703a4ae351f8e3d34645b73179ee3449722b55",
+  "verification/bootstrap_metadata.json": "8fb6e3fd69d199712d3f9c628d1d44575961a233a6650577898f07083bccc33d",
+  "verification/ds2_bootstrap_ci_95_all_models.csv": "492af1c8114bd871eca630da220749f6d62a8f3d17dab38ee40efa8ebcd44886",
+  "verification/validation.json": "0c8f251b2158fba817dba576ff45843deb22de685d03dae15e6ed75f18821293"
+}
