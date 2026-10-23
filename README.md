@@ -1,4 +1,4 @@
-# HTTM_ECG — Phát hiện loạn nhịp ECG trên dữ liệu MIT-BIH
+Phát hiện loạn nhịp ECG trên dữ liệu MIT-BIH
 
 Dự án môn **Hệ thống thông minh**, xây dựng hệ thống phân loại từng nhịp ECG vào năm nhóm **N, S, V, F, Q**. Nhóm sử dụng CNN 1D kết hợp đặc trưng khoảng cách giữa các nhịp tim (RR), sau đó đưa mô hình vào một dịch vụ có giao diện chat trên trình duyệt.
 
